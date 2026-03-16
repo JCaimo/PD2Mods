@@ -484,11 +484,11 @@ class FormulaParser
 			case FormulaOpCode::MAX:
 			case FormulaOpCode::AVERAGE:
 			case FormulaOpCode::XOR:
+			case FormulaOpCode::COUNT:
 			{
 				ok = count > 0;
 				break;
 			}
-			case FormulaOpCode::COUNT:
 			case FormulaOpCode::COUNTIF:
 			{
 				ok = count > 1;
