@@ -5408,8 +5408,7 @@ bool MaxSocketsCondition::EvaluateInternal(UnitItemInfo* uInfo,
 	Condition* arg1,
 	Condition* arg2)
 {
-	BYTE max = D2COMMON_GetMaxSockets(uInfo->item);
-	return IntegerCompare(max, operation, targetStat, targetStat2);
+	return IntegerCompare(GetValue(uInfo), operation, targetStat, targetStat2);
 }
 
 FormulaCondition::FormulaCondition(string& k,
