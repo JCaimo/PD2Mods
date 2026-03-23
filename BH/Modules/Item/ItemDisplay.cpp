@@ -367,7 +367,7 @@ int GetAdjustedUnitStat(UnitItemInfo* uInfo, DWORD stat, DWORD layer)
 		) {
 		tmpVal = GetStatFromList(uInfo, stat);
 	}
-	return (float)tmpVal;
+	return tmpVal;
 }
 
 enum AttributeFlagTypes
