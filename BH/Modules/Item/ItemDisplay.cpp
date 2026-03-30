@@ -1132,15 +1132,15 @@ unordered_map<string, ReplacementSpec> ReplacementMap = {
 	{ "CHARSTAT", { 1, ReplacementSpec::ReplaceCharStat } },
 	{ "MULTI", { 2, ReplacementSpec::ReplaceMulti } },
 	// COLORS
-	{ "BLACK", { 0, ReplacementSpec::ReplaceGlideDependentColor("\xFF" "c\x02", "ÿc6") }},
-	{ "CORAL", { 0, ReplacementSpec::ReplaceGlideDependentColor("\xFF" "c\x06", "ÿc1") }},
-	{ "SAGE", { 0, ReplacementSpec::ReplaceGlideDependentColor("\xFF" "c\x07", "ÿc2") }},
-	{ "TEAL", { 0, ReplacementSpec::ReplaceGlideDependentColor("\xFF" "c\x09", "ÿc3") }},
-	{ "LIGHT_GRAY", { 0, ReplacementSpec::ReplaceGlideDependentColor("\xFF" "c\x0C", "ÿc5") }},
-	{ "FULL_TRANS", { 0, ReplacementSpec::ReplaceHDTextDependentColor("\xFF" "c\x40", "") }},
-	{ "THREE_FOURTHS_TRANS", { 0, ReplacementSpec::ReplaceHDTextDependentColor("\xFF" "c\x41", "") }},
-	{ "HALF_TRANS", { 0, ReplacementSpec::ReplaceHDTextDependentColor("\xFF" "c\x42", "") }},
-	{ "QUARTER_TRANS", { 0, ReplacementSpec::ReplaceHDTextDependentColor("\xFF" "c\x43", "") }},
+	{ "BLACK", { 0, ReplacementSpec::ReplaceGlideDependentColor("\xC3\xBF" "c\x02", "ÿc6") }},
+	{ "CORAL", { 0, ReplacementSpec::ReplaceGlideDependentColor("\xC3\xBF" "c\x06", "ÿc1") }},
+	{ "SAGE", { 0, ReplacementSpec::ReplaceGlideDependentColor("\xC3\xBF" "c\x07", "ÿc2") }},
+	{ "TEAL", { 0, ReplacementSpec::ReplaceGlideDependentColor("\xC3\xBF" "c\x09", "ÿc3") }},
+	{ "LIGHT_GRAY", { 0, ReplacementSpec::ReplaceGlideDependentColor("\xC3\xBF" "c\x0C", "ÿc5") }},
+	{ "FULL_TRANS", { 0, ReplacementSpec::ReplaceHDTextDependentColor("\xC3\xBF" "c\x40", "") }},
+	{ "THREE_FOURTHS_TRANS", { 0, ReplacementSpec::ReplaceHDTextDependentColor("\xC3\xBF" "c\x41", "") }},
+	{ "HALF_TRANS", { 0, ReplacementSpec::ReplaceHDTextDependentColor("\xC3\xBF" "c\x42", "") }},
+	{ "QUARTER_TRANS", { 0, ReplacementSpec::ReplaceHDTextDependentColor("\xC3\xBF" "c\x43", "") }},
 	{ "WHITE", { 0, ReplacementSpec::ReplaceBindString("ÿc0") } },
 	{ "RED", { 0, ReplacementSpec::ReplaceBindString("ÿc1") } },
 	{ "GREEN", { 0, ReplacementSpec::ReplaceBindString("ÿc2") } },
@@ -3024,7 +3024,7 @@ void TrimItemText(UnitItemInfo* uInfo,
 		auto       color_matches = std::sregex_iterator(name.begin(), name.end(), color_reg);
 		auto       color_end = std::sregex_iterator();
 		auto       match_count = std::distance(color_matches, color_end);
-		nColorCodesSize += 3 * match_count;
+		nColorCodesSize += 4 * match_count; // UTF-8: ÿ is 2 bytes + 'c' + digit = 4 bytes per color code
 
 		bool inShop = (uInfo->item->pItemData->pOwnerInventory != 0 && // Skip on ground items
 			find(begin(ShopNPCs), end(ShopNPCs), uInfo->item->pItemData->pOwnerInventory->pOwner->dwTxtFileNo) != end(ShopNPCs));
@@ -3283,7 +3283,7 @@ namespace ItemDisplay
 			const auto& text = f.second;
 
 			auto formulaRef = "FORMULA" + key;
-			transform(formulaRef.begin(), formulaRef.end(), formulaRef.begin(), toupper);
+			transform(formulaRef.begin(), formulaRef.end(), formulaRef.begin(), [](char c) { return (c >= 'a' && c <= 'z') ? (c - 32) : c; });
 
 			std::unique_ptr<Formula<FormulaContext>> out;
 			if (Formula<FormulaContext>::Compile(text, out, formulaVarDefs) != FormulaStatus::OK)
@@ -3306,7 +3306,7 @@ namespace ItemDisplay
 				while (rules[i].first.find(alias.first) != string::npos)
 					rules[i].first.replace(rules[i].first.find(alias.first), alias.first.length(), alias.second);
 
-				transform(alias.first.begin(), alias.first.end(), alias.first.begin(), toupper);
+				transform(alias.first.begin(), alias.first.end(), alias.first.begin(), [](char c) { return (c >= 'a' && c <= 'z') ? (c - 32) : c; });
 				while (rules[i].second.find("%" + alias.first + "%") != string::npos)
 					rules[i].second.replace(rules[i].second.find("%" + alias.first + "%"), alias.first.length() + 2, alias.second);
 			}
@@ -3514,13 +3514,13 @@ void BuildAction(string* str,
 				replace_match[1].first,
 				replace_match[1].second,
 				act->name.begin() + offset,
-				toupper
+				[](char c) { return (c >= 'a' && c <= 'z') ? (c - 32) : c; }
 			);
 		}
 	}
 	catch (std::exception e)
 	{
-		act->name = "\377c1FILTER REGEX ERROR";
+		act->name = "ÿc1FILTER REGEX ERROR";
 	}
 
 	// new stuff:

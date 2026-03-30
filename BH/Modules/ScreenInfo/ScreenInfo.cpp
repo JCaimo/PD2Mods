@@ -25,7 +25,7 @@ void ScreenInfo::OnLoad()
 
 	if (BH::cGuardLoaded)
 	{
-		Texthook* cGuardText = new Texthook(Perm, 790, 23, "ÿc4cGuard Loaded");
+		Texthook* cGuardText = new Texthook(Perm, 790, 23, "Ã¿c4cGuard Loaded");
 		cGuardText->SetAlignment(Right);
 	}
 	gameTimer = GetTickCount();
@@ -313,7 +313,7 @@ void ScreenInfo::OnAutomapDraw()
 		{
 			areaLevel = 85;
 			szAreaLevel = to_string(areaLevel);
-			szLevel = "ÿc;" + szLevel + " (" + to_string(szAreaLevel) + ")";
+			szLevel = "Ã¿c;" + szLevel + " (" + to_string(szAreaLevel) + ")";
 		}
 		else
 		{

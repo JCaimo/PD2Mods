@@ -139,13 +139,10 @@ bool IsValidMonster(UnitAny* pUnit)
 		return false;
 
 	wchar_t* name = D2CLIENT_GetUnitName(pUnit);
-	char* tmp = UnicodeToAnsi(name);
 
-	if ((strcmp(tmp, "an evil force") == 0) || (strcmp(tmp, "dummy") == 0) || (strcmp(tmp, "Maggot") == 0)) {
-		delete[] tmp;
+	if ((wcscmp(name, L"an evil force") == 0) || (wcscmp(name, L"dummy") == 0) || (wcscmp(name, L"Maggot") == 0)) {
 		return false;
 	}
-	delete[] tmp;
 
 	return true;
 }

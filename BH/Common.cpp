@@ -83,9 +83,9 @@ wchar_t* AnsiToUnicode(const char* str)
 char* UnicodeToAnsi(const wchar_t* str)
 {
 	char* buf = NULL;
-	int len = WideCharToMultiByte(CODE_PAGE, 0, str, -1, buf, 0, "?", NULL);
+	int len = WideCharToMultiByte(CODE_PAGE, 0, str, -1, buf, 0, NULL, NULL);
 	buf = new char[len];
-	WideCharToMultiByte(CODE_PAGE, 0, str, -1, buf, len, "?", NULL);
+	WideCharToMultiByte(CODE_PAGE, 0, str, -1, buf, len, NULL, NULL);
 	return buf;
 }
 
@@ -125,8 +125,9 @@ int StringToNumber(std::string str) {
 }
 
 std::string MaybeStripColorPrefix(std::string str) {
-	if (str.size() > 3 && str.substr(0, 2) == "ÿc") {
-		str = str.substr(3, str.size() - 3);
+	// UTF-8: ÿ is 2 bytes (0xC3 0xBF), so "ÿc" is 3 bytes, plus 1 byte for the color digit = 4
+	if (str.size() > 4 && str.substr(0, 3) == "ÿc") {
+		str = str.substr(4, str.size() - 4);
 	}
 
 	return str;
@@ -141,7 +142,7 @@ void PrintText(DWORD Color, char* szText, ...) {
 	vsnprintf_s(szBuffer, 152, _TRUNCATE, szText, Args);
 	va_end(Args);
 	wchar_t Buffer[0x130];
-	MultiByteToWideChar(CODE_PAGE, 1, szBuffer, 152, Buffer, 304);
+	MultiByteToWideChar(CODE_PAGE, 0, szBuffer, 152, Buffer, 304);
 	D2CLIENT_PrintGameString(Buffer, Color);
 }
 

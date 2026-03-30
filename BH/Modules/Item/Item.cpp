@@ -944,7 +944,7 @@ void __fastcall Item::ItemNamePatch(wchar_t* name, UnitAny* pItem, int nameSize)
 		else
 		{
 			// Half transparency
-			itemName = "\xFF" "c\x42" + itemName;
+			itemName = "\xC3\xBF" "c\x42" + itemName;
 		}
 	}
 
@@ -962,16 +962,16 @@ void __fastcall Item::ItemNamePatch(wchar_t* name, UnitAny* pItem, int nameSize)
 	// ÿc9 (yellow)
 
 	// Pre-trim "ending" color code that would otherwise be split into a partial code with
-	// the following conversion
+	// the following conversion. UTF-8 "ÿcX" is 4 bytes (ÿ=2 bytes + c + digit).
 	int lastColorPos = itemName.rfind("ÿc");
-	if (lastColorPos != string::npos && lastColorPos > nameSize - 6)
+	if (lastColorPos != string::npos && lastColorPos > nameSize - 7)
 	{
 		itemName.resize(lastColorPos);
 	}
 
 	// The game adds the item color code _after_ this ItemNamePatch intercept, so we need to
 	// reduce the total allowed size to account for this
-	MultiByteToWideChar(CODE_PAGE, MB_PRECOMPOSED, itemName.c_str(), -1, name, nameSize - 4);
+	MultiByteToWideChar(CODE_PAGE, 0, itemName.c_str(), -1, name, nameSize - 4);
 	delete[] szName;
 }
 
@@ -1086,7 +1086,7 @@ void Item::ProcessItemPacketFilterRules(UnitItemInfo* uInfo, px9c* pPacket)
 				) {
 				PrintText(color, "%s%s Dropped",
 					uInfo->attrs->name.c_str(),
-					App.legacy.verboseNotifications.toggle.isEnabled ? " \377c5drop" : ""
+					App.legacy.verboseNotifications.toggle.isEnabled ? " ÿc5drop" : ""
 				);
 			}
 			if (App.legacy.closeNotifications.toggle.isEnabled &&
@@ -1095,7 +1095,7 @@ void Item::ProcessItemPacketFilterRules(UnitItemInfo* uInfo, px9c* pPacket)
 				) {
 				PrintText(color, "%s%s",
 					uInfo->attrs->name.c_str(),
-					App.legacy.verboseNotifications.toggle.isEnabled ? " \377c5close" : ""
+					App.legacy.verboseNotifications.toggle.isEnabled ? " ÿc5close" : ""
 				);
 			}
 			*/
@@ -1966,7 +1966,7 @@ void __stdcall Item::OnProperties(wchar_t* wTxt)
 			if (shouldShowDesc)
 			{
 				static wchar_t wDesc[MAX_ITEM_TEXT_SIZE];
-				auto chars_written = MultiByteToWideChar(CODE_PAGE, MB_PRECOMPOSED, desc.c_str(), -1, wDesc, MAX_ITEM_TEXT_SIZE);
+				auto chars_written = MultiByteToWideChar(CODE_PAGE, 0, desc.c_str(), -1, wDesc, MAX_ITEM_TEXT_SIZE);
 
 				int aLen = wcslen(wTxt);
 				if (aLen < ITEM_TEXT_SIZE_LIMIT) {
