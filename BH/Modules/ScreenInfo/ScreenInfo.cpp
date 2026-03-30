@@ -68,9 +68,113 @@ void ScreenInfo::OnGameJoin()
 	startLevel = (int)D2COMMON_GetUnitStat(pUnit, STAT_LEVEL, 0);
 }
 
+void ScreenInfo::PasteFromClipboard()
+{
+	if (!IsClipboardFormatAvailable(CF_UNICODETEXT))
+		return;
+
+	OpenClipboard(NULL);
+	HGLOBAL glob = GetClipboardData(CF_UNICODETEXT);
+	wchar_t* cbtext = (wchar_t*)GlobalLock(glob);
+	if (!cbtext)
+	{
+		GlobalUnlock(glob);
+		CloseClipboard();
+		return;
+	}
+	size_t len = wcslen(cbtext);
+
+	// Release Ctrl if held
+	if (GetKeyState(VK_CONTROL) & 0x8000)
+	{
+		INPUT ctrlUp = { 0 };
+		ctrlUp.type = INPUT_KEYBOARD;
+		ctrlUp.ki.wVk = VK_CONTROL;
+		ctrlUp.ki.dwFlags = KEYEVENTF_KEYUP;
+		SendInput(1, &ctrlUp, sizeof(INPUT));
+	}
+
+	std::vector<INPUT> events;
+	char buffer[120] = { 0 };
+	GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_ILANGUAGE, buffer, sizeof(buffer));
+	HKL hKeyboardLayout = LoadKeyboardLayout(buffer, KLF_ACTIVATE);
+
+	for (unsigned int i = 0; i < len; i++)
+	{
+		INPUT keyEvent = { 0 };
+		const SHORT Vk = VkKeyScanExW(cbtext[i], hKeyboardLayout);
+
+		if (Vk == -1)
+		{
+			// Character has no key on the current layout — send as Unicode
+			ZeroMemory(&keyEvent, sizeof(keyEvent));
+			keyEvent.type = INPUT_KEYBOARD;
+			keyEvent.ki.dwFlags = KEYEVENTF_UNICODE;
+			keyEvent.ki.wScan = cbtext[i];
+			events.push_back(keyEvent);
+
+			ZeroMemory(&keyEvent, sizeof(keyEvent));
+			keyEvent.type = INPUT_KEYBOARD;
+			keyEvent.ki.dwFlags = KEYEVENTF_UNICODE | KEYEVENTF_KEYUP;
+			keyEvent.ki.wScan = cbtext[i];
+			events.push_back(keyEvent);
+			continue;
+		}
+
+		const UINT VKey = MapVirtualKey(LOBYTE(Vk), 0);
+
+		if (HIBYTE(Vk) == 1)
+		{  // shift key must be pressed
+			ZeroMemory(&keyEvent, sizeof(keyEvent));
+			keyEvent.type = INPUT_KEYBOARD;
+			keyEvent.ki.dwFlags = KEYEVENTF_SCANCODE;
+			keyEvent.ki.wScan = MapVirtualKey(VK_LSHIFT, 0);
+			events.push_back(keyEvent);
+		}
+
+		ZeroMemory(&keyEvent, sizeof(keyEvent));
+		keyEvent.type = INPUT_KEYBOARD;
+		keyEvent.ki.dwFlags = KEYEVENTF_SCANCODE;
+		keyEvent.ki.wScan = VKey;
+		events.push_back(keyEvent);
+
+		ZeroMemory(&keyEvent, sizeof(keyEvent));
+		keyEvent.type = INPUT_KEYBOARD;
+		keyEvent.ki.dwFlags = KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP;
+		keyEvent.ki.wScan = VKey;
+		events.push_back(keyEvent);
+
+		if (HIBYTE(Vk) == 1)
+		{  // release shift key
+			ZeroMemory(&keyEvent, sizeof(keyEvent));
+			keyEvent.type = INPUT_KEYBOARD;
+			keyEvent.ki.dwFlags = KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP;
+			keyEvent.ki.wScan = MapVirtualKey(VK_LSHIFT, 0);
+			events.push_back(keyEvent);
+		}
+	}
+	GlobalUnlock(glob);
+	CloseClipboard();
+
+	if (hKeyboardLayout)
+	{
+		UnloadKeyboardLayout(hKeyboardLayout);
+	}
+	SendInput(events.size(), &events[0], sizeof(INPUT));
+}
+
 void ScreenInfo::OnKey(bool up, BYTE key, LPARAM lParam, bool* block)
 {
+	if (up)
+		return;
 
+	bool ctrlState = ((GetKeyState(VK_LCONTROL) & 0x80) || (GetKeyState(VK_RCONTROL) & 0x80));
+	// Ctrl+V paste in chat console
+	if (key == 0x56 && ctrlState && D2CLIENT_GetUIState(UI_CHAT_CONSOLE))
+	{
+		*block = true;
+		PasteFromClipboard();
+	}
 }
 
 
@@ -81,66 +185,10 @@ void ScreenInfo::OnRightClick(bool up, int x, int y, bool* block)
 		return;
 
 	int left = 130, top = 500, width = 540, height = 42;
-	if (D2CLIENT_GetUIState(0x05) && x >= left && x <= (left + width) && y >= top && y <= (top + height))
+	if (D2CLIENT_GetUIState(UI_CHAT_CONSOLE) && x >= left && x <= (left + width) && y >= top && y <= (top + height))
 	{
 		*block = true;
-
-		if (IsClipboardFormatAvailable(CF_TEXT))
-		{
-			OpenClipboard(NULL);
-			HGLOBAL glob = GetClipboardData(CF_TEXT);
-			size_t size = GlobalSize(glob);
-			char* cbtext = (char*)glob;
-
-			std::vector<INPUT> events;
-			char buffer[120] = { 0 };
-			GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_ILANGUAGE, buffer, sizeof(buffer));
-			HKL hKeyboardLayout = LoadKeyboardLayout(buffer, KLF_ACTIVATE);
-
-			for (unsigned int i = 0; i < size - 1; i++)
-			{
-				INPUT keyEvent = { 0 };
-				const SHORT Vk = VkKeyScanEx(cbtext[i], hKeyboardLayout);
-				const UINT VKey = MapVirtualKey(LOBYTE(Vk), 0);
-
-				if (HIBYTE(Vk) == 1)
-				{  // shift key must be pressed
-					ZeroMemory(&keyEvent, sizeof(keyEvent));
-					keyEvent.type = INPUT_KEYBOARD;
-					keyEvent.ki.dwFlags = KEYEVENTF_SCANCODE;
-					keyEvent.ki.wScan = MapVirtualKey(VK_LSHIFT, 0);
-					events.push_back(keyEvent);
-				}
-
-				ZeroMemory(&keyEvent, sizeof(keyEvent));
-				keyEvent.type = INPUT_KEYBOARD;
-				keyEvent.ki.dwFlags = KEYEVENTF_SCANCODE;
-				keyEvent.ki.wScan = VKey;
-				events.push_back(keyEvent);
-
-				ZeroMemory(&keyEvent, sizeof(keyEvent));
-				keyEvent.type = INPUT_KEYBOARD;
-				keyEvent.ki.dwFlags = KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP;
-				keyEvent.ki.wScan = VKey;
-				events.push_back(keyEvent);
-
-				if (HIBYTE(Vk) == 1)
-				{  // release shift key
-					ZeroMemory(&keyEvent, sizeof(keyEvent));
-					keyEvent.type = INPUT_KEYBOARD;
-					keyEvent.ki.dwFlags = KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP;
-					keyEvent.ki.wScan = MapVirtualKey(VK_LSHIFT, 0);
-					events.push_back(keyEvent);
-				}
-			}
-			CloseClipboard();
-
-			if (hKeyboardLayout)
-			{
-				UnloadKeyboardLayout(hKeyboardLayout);
-			}
-			int retval = SendInput(events.size(), &events[0], sizeof(INPUT));
-		}
+		PasteFromClipboard();
 	}
 }
 

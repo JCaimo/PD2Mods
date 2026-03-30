@@ -586,7 +586,7 @@ void StashExport::OnKey(bool up, BYTE key, LPARAM lParam, bool* block) {
 		}
 	}
 	// Control + C
-	else if (key == 67 && ctrlState) {
+	else if (!D2CLIENT_GetUIState(UI_CHAT_CONSOLE) && key == 67 && ctrlState) {
 		*block = true;
 		if (!up)
 			return;
