@@ -107,9 +107,9 @@ std::map<int, int> weponSpeedToTblIndex = {
 UnitAny* Item::viewingUnit;
 
 Patch* itemNamePatch = new Patch(Call, D2CLIENT, { 0x92366, 0x96736 }, (int)ItemName_Interception, 6);
-Patch* itemPropertiesPatch = new Patch(Jump, D2CLIENT, { 0x5612C, 0x2E3FC }, (int)GetProperties_Interception, 6);
-Patch* itemPropertyStringDamagePatch = new Patch(Call, D2CLIENT, { 0x55D7B, 0x2E04B }, (int)GetItemPropertyStringDamage_Interception, 5);
-Patch* itemPropertyStringPatch = new Patch(Call, D2CLIENT, { 0x55D9D, 0x2E06D }, (int)GetItemPropertyString_Interception, 5);
+//Patch* itemPropertiesPatch = new Patch(Jump, D2CLIENT, { 0x5612C, 0x2E3FC }, (int)GetProperties_Interception, 6);
+//Patch* itemPropertyStringDamagePatch = new Patch(Call, D2CLIENT, { 0x55D7B, 0x2E04B }, (int)GetItemPropertyStringDamage_Interception, 5);
+//Patch* itemPropertyStringPatch = new Patch(Call, D2CLIENT, { 0x55D9D, 0x2E06D }, (int)GetItemPropertyString_Interception, 5);
 Patch* viewInvPatch1 = new Patch(Call, D2CLIENT, { 0x953E2, 0x997B2 }, (int)ViewInventoryPatch1_ASM, 6);
 Patch* viewInvPatch2 = new Patch(Call, D2CLIENT, { 0x94AB4, 0x98E84 }, (int)ViewInventoryPatch2_ASM, 6);
 Patch* viewInvPatch3 = new Patch(Call, D2CLIENT, { 0x93A6F, 0x97E3F }, (int)ViewInventoryPatch3_ASM, 5);
@@ -151,9 +151,9 @@ void Item::OnLoad() {
 	dropToGroundIntercept->Install();
 	putInContainerIntercept->Install();
 
-	itemPropertiesPatch->Install();
-	itemPropertyStringDamagePatch->Install();
-	itemPropertyStringPatch->Install();
+	//itemPropertiesPatch->Install();
+	//itemPropertyStringDamagePatch->Install();
+	//itemPropertyStringPatch->Install();
 
 	itemNamePatch->Install();
 
@@ -784,9 +784,9 @@ void Item::ChangeFilterLevels(int newLevel) {
 
 void Item::OnUnload() {
 	itemNamePatch->Remove();
-	itemPropertiesPatch->Remove();
-	itemPropertyStringDamagePatch->Remove();
-	itemPropertyStringPatch->Remove();
+	//itemPropertiesPatch->Remove();
+	//itemPropertyStringDamagePatch->Remove();
+	//itemPropertyStringPatch->Remove();
 	viewInvPatch1->Remove();
 	viewInvPatch2->Remove();
 	viewInvPatch3->Remove();
@@ -1425,7 +1425,10 @@ bool ShouldShowIlvl(UnitItemInfo* uInfo)
 static UnitAny* lastItem;
 static DWORD previousFlags;
 
-void __stdcall Item::OnProperties(wchar_t* wTxt)
+#ifdef __cplusplus
+extern "C" {
+#endif
+__declspec(dllexport)void __stdcall BHOnProperties(wchar_t* wTxt)
 {
 	UnitAny* pItem = *p_D2CLIENT_SelectedInvItem;
 	UnitItemInfo uInfo;
@@ -2043,7 +2046,7 @@ void __stdcall Item::OnProperties(wchar_t* wTxt)
 	}
 }
 
-BOOL __stdcall Item::OnDamagePropertyBuild(UnitAny* pItem, DamageStats* pDmgStats, int nStat, wchar_t* wOut) {
+__declspec(dllexport) BOOL __stdcall BHOnDamagePropertyBuild(UnitAny* pItem, DamageStats* pDmgStats, int nStat, wchar_t* wOut) {
 	wchar_t newDesc[128];
 
 	// Ignore a max stat, use just a min dmg prop to gen the property string
@@ -2176,7 +2179,7 @@ BOOL __stdcall Item::OnDamagePropertyBuild(UnitAny* pItem, DamageStats* pDmgStat
 	if (newDesc[wcslen(newDesc) - 1] == L'\n')
 		newDesc[wcslen(newDesc) - 1] = L'\0';
 
-	OnPropertyBuild(newDesc, nStat, pItem, 0);
+	BHOnPropertyBuild(newDesc, nStat, pItem, 0);
 	// Beside this add-on the function is almost 1:1 copy of Blizzard's one -->
 	wcscat_s(wOut, 1024, newDesc);
 	wcscat_s(wOut, 1024, L"\n");
@@ -2184,7 +2187,7 @@ BOOL __stdcall Item::OnDamagePropertyBuild(UnitAny* pItem, DamageStats* pDmgStat
 	return TRUE;
 }
 
-void __stdcall Item::OnPropertyBuild(wchar_t* wOut, int nStat, UnitAny* pItem, int nStatParam)
+__declspec(dllexport) void __stdcall BHOnPropertyBuild(wchar_t* wOut, int nStat, UnitAny* pItem, int nStatParam)
 {
 	int nCorruptor = ItemGetCorruptor(pItem, STAT_UNUSED205);
 	BOOL isCorrupted = StatIsCorrupted(nStat, nCorruptor);
@@ -2683,6 +2686,10 @@ void __stdcall Item::OnPropertyBuild(wchar_t* wOut, int nStat, UnitAny* pItem, i
 	}
 }
 
+#ifdef __cplusplus
+}
+#endif
+
 /*
 	Search mod used in MagicPrefix.txt, UniqueItemsTxt, RunesTxt, etc. (index from Properties.txt) by ItemStatCost.txt stat index
 	@param nStatParam - param column for property (skill id etc)
@@ -2956,35 +2963,35 @@ void __declspec(naked) ItemName_Interception()
 }
 
 
-__declspec(naked) void __fastcall GetProperties_Interception()	// 3rd ItemProp func
-{
-	__asm
-	{
-		push eax
-		call Item::OnProperties
-		add esp, 0x808
-		ret 12
-	}
-}
+//__declspec(naked) void __fastcall GetProperties_Interception()	// 3rd ItemProp func
+//{
+//	__asm
+//	{
+//		push eax
+//		call Item::OnProperties
+//		add esp, 0x808
+//		ret 12
+//	}
+//}
 
 /*	Wrapper over D2CLIENT.0x2E04B (1.13d)
 	BOOL __userpurge ITEMS_BuildDamagePropertyDesc@<eax>(DamageStats *pStats@<eax>, int nStat, wchar_t *wOut)
 	Function is pretty simple so I decided to rewrite it.
 	@esp-0x20:	pItem
 */
-void __declspec(naked) GetItemPropertyStringDamage_Interception()	// 1st ItemProp func
-{
-	__asm {
-		push[esp + 8]			// wOut
-		push[esp + 8]			// nStat
-		push eax				// pStats
-		push[esp - 0x20 + 12]	// pItem
-
-		call Item::OnDamagePropertyBuild
-
-		ret 8
-	}
-}
+//void __declspec(naked) GetItemPropertyStringDamage_Interception()	// 1st ItemProp func
+//{
+//	__asm {
+//		push[esp + 8]			// wOut
+//		push[esp + 8]			// nStat
+//		push eax				// pStats
+//		push[esp - 0x20 + 12]	// pItem
+//
+//		call Item::OnDamagePropertyBuild
+//
+//		ret 8
+//	}
+//}
 
 /* Wrapper over D2CLIENT.0x2E06D (1.13d)
 	As far I know this: int __userpurge ITEMS_ParseStats_6FADCE40<eax>(signed __int32 nStat<eax>, wchar_t *wOut<esi>, UnitAny *pItem, StatListEx *pStatList, DWORD nStatParam, DWORD nStatValue, int a7)
@@ -2993,40 +3000,40 @@ void __declspec(naked) GetItemPropertyStringDamage_Interception()	// 1st ItemPro
 	@edi pStatListEx
 	@esp-0x10 seems to always keep pItem *careful*
 */
-void __declspec(naked) GetItemPropertyString_Interception()	// 2nd ItemProp func
-{
-	static DWORD rtn = 0; // if something is stupid but works then it's not stupid!
-	__asm
-	{
-		pop rtn
-		// Firstly generate string using old function
-		call D2CLIENT_ParseStats_J
-		push rtn
-
-		push[esp - 4] // preserve nStatParam
-
-		push eax // Store result
-		mov eax, [esp - 0x10 + 8 + 4] // pItem
-		push ecx
-		push edx
-
-		// Then pass the output to our func
-		push[esp + 12] // nStatParam
-		push eax // pItem
-		push ebx // nStat
-		push esi // wOut
-
-		call Item::OnPropertyBuild
-
-		pop edx
-		pop ecx
-		pop eax
-
-		add esp, 4 // clean nStatParam
-
-		ret
-	}
-}
+//void __declspec(naked) GetItemPropertyString_Interception()	// 2nd ItemProp func
+//{
+//	static DWORD rtn = 0; // if something is stupid but works then it's not stupid!
+//	__asm
+//	{
+//		pop rtn
+//		// Firstly generate string using old function
+//		call D2CLIENT_ParseStats_J
+//		push rtn
+//
+//		push[esp - 4] // preserve nStatParam
+//
+//		push eax // Store result
+//		mov eax, [esp - 0x10 + 8 + 4] // pItem
+//		push ecx
+//		push edx
+//
+//		// Then pass the output to our func
+//		push[esp + 12] // nStatParam
+//		push eax // pItem
+//		push ebx // nStat
+//		push esi // wOut
+//
+//		call Item::OnPropertyBuild
+//
+//		pop edx
+//		pop ecx
+//		pop eax
+//
+//		add esp, 4 // clean nStatParam
+//
+//		ret
+//	}
+//}
 
 void __declspec(naked) ViewInventoryPatch1_ASM()
 {

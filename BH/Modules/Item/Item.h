@@ -96,6 +96,16 @@ public:
 	static unsigned int GetFilterLevel() { return App.lootfilter.filterLevel.uValue; }
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+__declspec(dllexport) void __stdcall BHOnProperties(wchar_t* wTxt);
+__declspec(dllexport) BOOL __stdcall BHOnDamagePropertyBuild(UnitAny* pItem, DamageStats* pDmgStats, int nStat, wchar_t* wOut);
+__declspec(dllexport) void __stdcall BHOnPropertyBuild(wchar_t* wOut, int nStat, UnitAny* pItem, int nStatParam);
+#ifdef __cplusplus
+}
+#endif
+
 void ItemName_Interception();
 void __fastcall GetProperties_Interception();
 void GetItemPropertyStringDamage_Interception();
