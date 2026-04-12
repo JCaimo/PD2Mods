@@ -746,8 +746,8 @@ void StatsDisplay::OnDraw()
 			None,
 			6,
 			Gold,
-			L"Critical Strike: ÿc0%d",
-			min(static_cast<int>(D2COMMON_GetUnitStat(unit, STAT_CRITICALSTRIKE, 0)), 75));
+			L"Critical Strike: ÿc0%d / 75",
+			min(static_cast<int>(D2COMMON_GetUnitStat(unit, STAT_CRITICALSTRIKE, 0) + D2COMMON_GetUnitStat(unit, STAT_ITEM_CRITICALSTRIKE_CHANCE, 0)), 75));
 		Texthook::Draw(column1,
 			(y += 16),
 			None,
