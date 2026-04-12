@@ -8,6 +8,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <cwctype>
 
 enum class FormulaStatus
 {
@@ -103,7 +104,7 @@ class Formula
 
 	std::unique_ptr<FormulaNode<T>> root;
 public:
-	static FormulaStatus Compile(const std::string& raw, std::unique_ptr<Formula>& out, const std::unordered_map<std::string, FormulaVarDefinition<T>>& reg);
+	static FormulaStatus Compile(const std::wstring& raw, std::unique_ptr<Formula>& out, const std::unordered_map<std::wstring, FormulaVarDefinition<T>>& reg);
 
 	Formula(std::unique_ptr<FormulaNode<T>> r) : root(std::move(r))
 	{}
@@ -119,7 +120,7 @@ public:
 struct FormulaToken
 {
 	const FormulaTokenType type;
-	const std::string value;
+	const std::wstring value;
 };
 
 class FormulaTokenStream
@@ -134,7 +135,7 @@ public:
 	}
 	const FormulaToken& peek() const
 	{
-		static FormulaToken eof_token = { FormulaTokenType::T_EOF, "" };
+		static FormulaToken eof_token = { FormulaTokenType::T_EOF, L"" };
 		return (pos >= tokens.size()) ? eof_token : tokens[pos];
 	}
 	void advance()
@@ -156,47 +157,47 @@ public:
 class FormulaLexer
 {
 public:
-	static FormulaStatus tokenize(const std::string& input, FormulaTokenStream& stream)
+	static FormulaStatus tokenize(const std::wstring& input, FormulaTokenStream& stream)
 	{
 		size_t i = 0;
 		while (i < input.length()) {
-			if (std::isspace(input[i])) {
+			if (std::iswspace(input[i])) {
 				i++;
 				continue;
 			}
 
 			if (i + 1 < input.length()) {
-				std::string op2 = input.substr(i, 2);
-				if (op2 == "==" || op2 == "!=" || op2 == ">=" || op2 == "<=") {
+				std::wstring op2 = input.substr(i, 2);
+				if (op2 == L"==" || op2 == L"!=" || op2 == L">=" || op2 == L"<=") {
 					stream.add({ FormulaTokenType::OP, op2 });
 					i += 2;
 					continue;
 				}
 			}
-			if (std::strchr("+-*/^<>!", input[i])) {
-				stream.add({ FormulaTokenType::OP, std::string(1, input[i]) });
+			if (std::wcschr(L"+-*/^<>!", input[i])) {
+				stream.add({ FormulaTokenType::OP, std::wstring(1, input[i]) });
 				i++;
 				continue;
 			}
-			if (input[i] == '(') {
-				stream.add({ FormulaTokenType::OPEN_P, "(" });
+			if (input[i] == L'(') {
+				stream.add({ FormulaTokenType::OPEN_P, L"(" });
 				i++;
 				continue;
 			}
-			if (input[i] == ')') {
-				stream.add({ FormulaTokenType::CLOSE_P, ")" });
+			if (input[i] == L')') {
+				stream.add({ FormulaTokenType::CLOSE_P, L")" });
 				i++;
 				continue;
 			}
-			if (input[i] == ',') {
-				stream.add({ FormulaTokenType::COMMA, "," });
+			if (input[i] == L',') {
+				stream.add({ FormulaTokenType::COMMA, L"," });
 				i++;
 				continue;
 			}
 
-			if (std::isdigit(input[i]) || input[i] == '.') {
-				char* end = nullptr;
-				std::ignore = strtof(input.c_str() + i, &end);
+			if (std::iswdigit(input[i]) || input[i] == L'.') {
+				wchar_t* end = nullptr;
+				std::ignore = wcstof(input.c_str() + i, &end);
 				size_t len = end - input.c_str() - i;
 				if (len == 0) {
 					return FormulaStatus::LEXICAL_ERROR;
@@ -206,9 +207,9 @@ public:
 				continue;
 			}
 
-			if (std::isalpha(input[i]) || input[i] == '_') {
+			if (std::iswalpha(input[i]) || input[i] == L'_') {
 				size_t start = i++;
-				while (i < input.length() && (std::isalpha(input[i]) || input[i] == '_')) {
+				while (i < input.length() && (std::iswalpha(input[i]) || input[i] == L'_')) {
 					i++;
 				}
 				stream.add({ FormulaTokenType::VARIABLE, input.substr(start, i - start) });
@@ -223,40 +224,40 @@ public:
 namespace FormulaData
 {
 	// lower precedence ops are evaluated after higher ones
-	static std::unordered_map<std::string, std::pair<FormulaOpCode, int>> opTable = {
-		{"==", {FormulaOpCode::EQ, 1}},
-		{">", {FormulaOpCode::GT, 1}},
-		{"<", {FormulaOpCode::LT, 1}},
-		{"!=", {FormulaOpCode::NE, 1}},
-		{">=", {FormulaOpCode::GE, 1}},
-		{"<=", {FormulaOpCode::LE, 1}},
-		{"+", {FormulaOpCode::ADD, 2}},
-		{"-", {FormulaOpCode::SUB, 2}},
-		{"*", {FormulaOpCode::MUL, 3}},
-		{"/", {FormulaOpCode::DIV, 3}},
-		{"^", {FormulaOpCode::POW, 4}}
+	static std::unordered_map<std::wstring, std::pair<FormulaOpCode, int>> opTable = {
+		{L"==", {FormulaOpCode::EQ, 1}},
+		{L">", {FormulaOpCode::GT, 1}},
+		{L"<", {FormulaOpCode::LT, 1}},
+		{L"!=", {FormulaOpCode::NE, 1}},
+		{L">=", {FormulaOpCode::GE, 1}},
+		{L"<=", {FormulaOpCode::LE, 1}},
+		{L"+", {FormulaOpCode::ADD, 2}},
+		{L"-", {FormulaOpCode::SUB, 2}},
+		{L"*", {FormulaOpCode::MUL, 3}},
+		{L"/", {FormulaOpCode::DIV, 3}},
+		{L"^", {FormulaOpCode::POW, 4}}
 	};
 
-	static std::unordered_map<std::string, FormulaOpCode> fnTable = {
-		{"if", FormulaOpCode::IF},
-		{"and", FormulaOpCode::AND},
-		{"or", FormulaOpCode::OR},
-		{"ln", FormulaOpCode::LN},
-		{"exp", FormulaOpCode::EXP},
-		{"floor", FormulaOpCode::FLOOR},
-		{"ceil", FormulaOpCode::CEIL},
-		{"round", FormulaOpCode::ROUND},
-		{"min", FormulaOpCode::MIN},
-		{"max", FormulaOpCode::MAX},
-		{"mod", FormulaOpCode::MOD},
-		{"average", FormulaOpCode::AVERAGE},
-		{"sqrt", FormulaOpCode::SQRT},
-		{"pow", FormulaOpCode::POW},
-		{"count", FormulaOpCode::COUNT},
-		{"countif", FormulaOpCode::COUNTIF},
-		{"xor", FormulaOpCode::XOR},
-		{"abs", FormulaOpCode::ABS},
-		{"sign", FormulaOpCode::SIGN},
+	static std::unordered_map<std::wstring, FormulaOpCode> fnTable = {
+		{L"if", FormulaOpCode::IF},
+		{L"and", FormulaOpCode::AND},
+		{L"or", FormulaOpCode::OR},
+		{L"ln", FormulaOpCode::LN},
+		{L"exp", FormulaOpCode::EXP},
+		{L"floor", FormulaOpCode::FLOOR},
+		{L"ceil", FormulaOpCode::CEIL},
+		{L"round", FormulaOpCode::ROUND},
+		{L"min", FormulaOpCode::MIN},
+		{L"max", FormulaOpCode::MAX},
+		{L"mod", FormulaOpCode::MOD},
+		{L"average", FormulaOpCode::AVERAGE},
+		{L"sqrt", FormulaOpCode::SQRT},
+		{L"pow", FormulaOpCode::POW},
+		{L"count", FormulaOpCode::COUNT},
+		{L"countif", FormulaOpCode::COUNTIF},
+		{L"xor", FormulaOpCode::XOR},
+		{L"abs", FormulaOpCode::ABS},
+		{L"sign", FormulaOpCode::SIGN},
 	};
 }
 
@@ -265,7 +266,7 @@ class FormulaParser
 {
 	FormulaTokenStream& stream;
 	FormulaStatus& err;
-	const std::unordered_map<std::string, FormulaVarDefinition<T>>& registry;
+	const std::unordered_map<std::wstring, FormulaVarDefinition<T>>& registry;
 
 	std::unique_ptr<FormulaNode<T>> parseExpression(const int minPrec)
 	{
@@ -305,7 +306,7 @@ class FormulaParser
 
 	std::unique_ptr<FormulaNode<T>> parseUnary()
 	{
-		if (stream.peek().value == "-") {
+		if (stream.peek().value == L"-") {
 			stream.advance();
 			auto n = std::make_unique<FormulaNode<T>>(FormulaOpCode::NEGATE);
 			auto child = parseUnary();
@@ -316,11 +317,11 @@ class FormulaParser
 			n->children.push_back(std::move(child));
 			return n;
 		}
-		if (stream.peek().value == "+") {
+		if (stream.peek().value == L"+") {
 			stream.advance();
 			return parseUnary();
 		}
-		if (stream.peek().value == "!") {
+		if (stream.peek().value == L"!") {
 			stream.advance();
 			auto n = std::make_unique<FormulaNode<T>>(FormulaOpCode::NOT);
 			auto child = parseUnary();
@@ -339,7 +340,7 @@ class FormulaParser
 		const FormulaToken& t = stream.peek();
 
 		if (t.type == FormulaTokenType::VARIABLE) {
-			std::string name = t.value;
+			std::wstring name = t.value;
 
 			if (FormulaData::fnTable.find(name) != FormulaData::fnTable.end()) {
 				return parseFunction(name);
@@ -368,9 +369,9 @@ class FormulaParser
 				}
 
 				const auto& value = stream.peek().value;
-				char* end = nullptr;
+				wchar_t* end = nullptr;
 				errno = 0;
-				long val = std::strtol(value.c_str(), &end, 10);
+				long val = std::wcstol(value.c_str(), &end, 10);
 				if (errno == ERANGE || *end) {
 					err = FormulaStatus::SYNTAX_ERROR;
 					return nullptr;
@@ -390,9 +391,9 @@ class FormulaParser
 		}
 
 		if (t.type == FormulaTokenType::NUMBER) {
-			char* end = nullptr;
+			wchar_t* end = nullptr;
 			errno = 0;
-			float val = std::strtof(t.value.c_str(), &end);
+			float val = std::wcstof(t.value.c_str(), &end);
 			if (errno == ERANGE || *end) {
 				err = FormulaStatus::SYNTAX_ERROR;
 				return nullptr;
@@ -416,7 +417,7 @@ class FormulaParser
 		return nullptr;
 	}
 
-	std::unique_ptr<FormulaNode<T>> parseFunction(const std::string& name)
+	std::unique_ptr<FormulaNode<T>> parseFunction(const std::wstring& name)
 	{
 		FormulaOpCode code = FormulaData::fnTable.find(name)->second;
 		stream.advance();
@@ -503,7 +504,7 @@ class FormulaParser
 		return n;
 	}
 public:
-	FormulaParser(FormulaTokenStream& ts, FormulaStatus& e, const std::unordered_map<std::string, FormulaVarDefinition<T>>& reg)
+	FormulaParser(FormulaTokenStream& ts, FormulaStatus& e, const std::unordered_map<std::wstring, FormulaVarDefinition<T>>& reg)
 		: stream(ts),
 		err(e),
 		registry(reg)
@@ -761,11 +762,11 @@ void Formula<T>::optimize(std::unique_ptr<FormulaNode<T>>& n, FormulaStatus& err
 }
 
 template<typename T>
-FormulaStatus Formula<T>::Compile(const std::string& raw, std::unique_ptr<Formula<T>>& out, const std::unordered_map<std::string, FormulaVarDefinition<T>>& reg)
+FormulaStatus Formula<T>::Compile(const std::wstring& raw, std::unique_ptr<Formula<T>>& out, const std::unordered_map<std::wstring, FormulaVarDefinition<T>>& reg)
 {
 	FormulaTokenStream ts;
-	std::string input = raw;
-	std::transform(input.begin(), input.end(), input.begin(), tolower);
+	std::wstring input = raw;
+	std::transform(input.begin(), input.end(), input.begin(), towlower);
 
 	FormulaStatus err = FormulaLexer::tokenize(input, ts);
 	if (err != FormulaStatus::OK) {

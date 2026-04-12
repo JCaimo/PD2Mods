@@ -193,8 +193,7 @@ void GetItemStats()
 		StatProperties* bits = new StatProperties();
 		bits->pItemStatCostTxt = &(*p_D2COMMON_sgptDataTable)->pItemStatCostTxt[id];
 		bits->statId = id;
-		char* statString = UnicodeToAnsi(GetTblEntryByIndex(bits->pItemStatCostTxt->wDescStrPos, TBLOFFSET_STRING));
-		bits->name = statString;
+		bits->name = GetTblEntryByIndex(bits->pItemStatCostTxt->wDescStrPos, TBLOFFSET_STRING);
 		AllStatList.push_back(bits);
 	}
 }
@@ -389,7 +388,7 @@ void GetWeaponAttributes()
 		}
 
 		ItemAttributes* attrs = new ItemAttributes();
-		attrs->name = UnicodeToAnsi(GetTblEntryByIndex(pWeapons->wnamestr, TBLOFFSET_STRING));
+		attrs->name = GetTblEntryByIndex(pWeapons->wnamestr, TBLOFFSET_STRING);
 		attrs->category = pWeapons->nType;
 		attrs->width = pWeapons->binvwidth;
 		attrs->height = pWeapons->binvheight;
@@ -475,7 +474,7 @@ void GetArmorAttributes()
 		}
 
 		ItemAttributes* attrs = new ItemAttributes();
-		attrs->name = UnicodeToAnsi(GetTblEntryByIndex(pArmor->wnamestr, TBLOFFSET_STRING));
+		attrs->name = GetTblEntryByIndex(pArmor->wnamestr, TBLOFFSET_STRING);
 		attrs->category = pArmor->nType;
 		attrs->width = pArmor->binvwidth;
 		attrs->height = pArmor->binvheight;
@@ -586,7 +585,7 @@ void GetMiscAttributes()
 		}
 
 		ItemAttributes* attrs = new ItemAttributes();
-		attrs->name = UnicodeToAnsi(GetTblEntryByIndex(pMisc->wnamestr, TBLOFFSET_STRING));
+		attrs->name = GetTblEntryByIndex(pMisc->wnamestr, TBLOFFSET_STRING);
 		attrs->category = pMisc->nType;
 		attrs->width = pMisc->binvwidth;
 		attrs->height = pMisc->binvheight;
@@ -916,8 +915,7 @@ void __fastcall Item::ItemNamePatch(wchar_t* name, UnitAny* pItem, int nameSize)
 		break;
 	}
 
-	char* szName = UnicodeToAnsi(name);
-	string itemName = szName;
+	std::wstring itemName(name);
 	char* code = D2COMMON_GetItemText(pItem->dwTxtFileNo)->szCode;
 
 	if (App.lootfilter.enableFilter.value) {
@@ -939,12 +937,12 @@ void __fastcall Item::ItemNamePatch(wchar_t* name, UnitAny* pItem, int nameSize)
 	{
 		if (!App.d2gl.usingD2GL.value && !App.d2gl.usingHDText.value)
 		{
-			itemName += "\nÿc1(Allocated)";
+			itemName += L"\n\xFF" L"c1(Allocated)";
 		}
 		else
 		{
 			// Half transparency
-			itemName = "\xC3\xBF" "c\x42" + itemName;
+			itemName = L"\xFF" L"c\x42" + itemName;
 		}
 	}
 
@@ -962,17 +960,16 @@ void __fastcall Item::ItemNamePatch(wchar_t* name, UnitAny* pItem, int nameSize)
 	// ÿc9 (yellow)
 
 	// Pre-trim "ending" color code that would otherwise be split into a partial code with
-	// the following conversion. UTF-8 "ÿcX" is 4 bytes (ÿ=2 bytes + c + digit).
-	int lastColorPos = itemName.rfind("ÿc");
-	if (lastColorPos != string::npos && lastColorPos > nameSize - 7)
+	// the following conversion.
+	size_t lastColorPos = itemName.rfind(L"\xFF" L"c");
+	if (lastColorPos != wstring::npos && lastColorPos > (size_t)(nameSize - 5))
 	{
 		itemName.resize(lastColorPos);
 	}
 
 	// The game adds the item color code _after_ this ItemNamePatch intercept, so we need to
 	// reduce the total allowed size to account for this
-	MultiByteToWideChar(CODE_PAGE, 0, itemName.c_str(), -1, name, nameSize - 4);
-	delete[] szName;
+	wcsncpy_s(name, nameSize, itemName.c_str(), _TRUNCATE);
 }
 
 // Path when an item first drops from a monster, chest, etc.
@@ -1114,7 +1111,7 @@ void Item::ProcessItemPacketFilterRules(UnitItemInfo* uInfo, px9c* pPacket)
 	}
 }
 
-void Item::OrigGetItemName(UnitAny* item, string& itemName, char* code)
+void Item::OrigGetItemName(UnitAny* item, wstring& itemName, char* code)
 {
 	bool displayItemLevel = App.lootfilter.showIlvl.value;
 	if (App.legacy.shortenItemNames.toggle.isEnabled)
@@ -1122,84 +1119,84 @@ void Item::OrigGetItemName(UnitAny* item, string& itemName, char* code)
 		// We will also strip ilvls from these items
 		if (code[0] == 't' && code[1] == 's' && code[2] == 'c')  // town portal scroll
 		{
-			itemName = "ÿc2**ÿc0TP";
+			itemName = L"\xFF" L"c2**\xFF" L"c0TP";
 			displayItemLevel = false;
 		}
 		else if (code[0] == 'i' && code[1] == 's' && code[2] == 'c')  // identify scroll
 		{
-			itemName = "ÿc2**ÿc0ID";
+			itemName = L"\xFF" L"c2**\xFF" L"c0ID";
 			displayItemLevel = false;
 		}
 		else if (code[0] == 'v' && code[1] == 'p' && code[2] == 's')  // stamina potion
 		{
-			itemName = "Stam";
+			itemName = L"Stam";
 			displayItemLevel = false;
 		}
 		else if (code[0] == 'y' && code[1] == 'p' && code[2] == 's')  // antidote potion
 		{
-			itemName = "Anti";
+			itemName = L"Anti";
 			displayItemLevel = false;
 		}
 		else if (code[0] == 'w' && code[1] == 'm' && code[2] == 's')  // thawing potion
 		{
-			itemName = "Thaw";
+			itemName = L"Thaw";
 			displayItemLevel = false;
 		}
 		else if (code[0] == 'g' && code[1] == 'p' && code[2] == 's')  // rancid gas potion
 		{
-			itemName = "Ranc";
+			itemName = L"Ranc";
 			displayItemLevel = false;
 		}
 		else if (code[0] == 'o' && code[1] == 'p' && code[2] == 's')  // oil potion
 		{
-			itemName = "Oil";
+			itemName = L"Oil";
 			displayItemLevel = false;
 		}
 		else if (code[0] == 'g' && code[1] == 'p' && code[2] == 'm')  // choking gas potion
 		{
-			itemName = "Chok";
+			itemName = L"Chok";
 			displayItemLevel = false;
 		}
 		else if (code[0] == 'o' && code[1] == 'p' && code[2] == 'm')  // exploding potion
 		{
-			itemName = "Expl";
+			itemName = L"Expl";
 			displayItemLevel = false;
 		}
 		else if (code[0] == 'g' && code[1] == 'p' && code[2] == 'l')  // strangling gas potion
 		{
-			itemName = "Stra";
+			itemName = L"Stra";
 			displayItemLevel = false;
 		}
 		else if (code[0] == 'o' && code[1] == 'p' && code[2] == 'l')  // fulminating potion
 		{
-			itemName = "Fulm";
+			itemName = L"Fulm";
 			displayItemLevel = false;
 		}
 		else if (code[0] == 'h' && code[1] == 'p')  // healing potions
 		{
 			if (code[2] == '1')
 			{
-				itemName = "ÿc1**ÿc0Min Heal";
+				itemName = L"\xFF" L"c1**\xFF" L"c0Min Heal";
 				displayItemLevel = false;
 			}
 			else if (code[2] == '2')
 			{
-				itemName = "ÿc1**ÿc0Lt Heal";
+				itemName = L"\xFF" L"c1**\xFF" L"c0Lt Heal";
 				displayItemLevel = false;
 			}
 			else if (code[2] == '3')
 			{
-				itemName = "ÿc1**ÿc0Heal";
+				itemName = L"\xFF" L"c1**\xFF" L"c0Heal";
 				displayItemLevel = false;
 			}
 			else if (code[2] == '4')
 			{
-				itemName = "ÿc1**ÿc0Gt Heal";
+				itemName = L"\xFF" L"c1**\xFF" L"c0Gt Heal";
 				displayItemLevel = false;
 			}
 			else if (code[2] == '5')
 			{
-				itemName = "ÿc1**ÿc0Sup Heal";
+				itemName = L"\xFF" L"c1**\xFF" L"c0Sup Heal";
 				displayItemLevel = false;
 			}
 		}
@@ -1207,27 +1204,27 @@ void Item::OrigGetItemName(UnitAny* item, string& itemName, char* code)
 		{
 			if (code[2] == '1')
 			{
-				itemName = "ÿc3**ÿc0Min Mana";
+				itemName = L"\xFF" L"c3**\xFF" L"c0Min Mana";
 				displayItemLevel = false;
 			}
 			else if (code[2] == '2')
 			{
-				itemName = "ÿc3**ÿc0Lt Mana";
+				itemName = L"\xFF" L"c3**\xFF" L"c0Lt Mana";
 				displayItemLevel = false;
 			}
 			else if (code[2] == '3')
 			{
-				itemName = "ÿc3**ÿc0Mana";
+				itemName = L"\xFF" L"c3**\xFF" L"c0Mana";
 				displayItemLevel = false;
 			}
 			else if (code[2] == '4')
 			{
-				itemName = "ÿc3**ÿc0Gt Mana";
+				itemName = L"\xFF" L"c3**\xFF" L"c0Gt Mana";
 				displayItemLevel = false;
 			}
 			else if (code[2] == '5')
 			{
-				itemName = "ÿc3**ÿc0Sup Mana";
+				itemName = L"\xFF" L"c3**\xFF" L"c0Sup Mana";
 				displayItemLevel = false;
 			}
 		}
@@ -1235,12 +1232,12 @@ void Item::OrigGetItemName(UnitAny* item, string& itemName, char* code)
 		{
 			if (code[2] == 's')
 			{
-				itemName = "ÿc;**ÿc0Rejuv";
+				itemName = L"\xFF" L"c;**\xFF" L"c0Rejuv";
 				displayItemLevel = false;
 			}
 			else if (code[2] == 'l')
 			{
-				itemName = "ÿc;**ÿc0Full";
+				itemName = L"\xFF" L"c;**\xFF" L"c0Full";
 				displayItemLevel = false;
 			}
 		}
@@ -1267,19 +1264,19 @@ void Item::OrigGetItemName(UnitAny* item, string& itemName, char* code)
 		/*Essences*/
 		if (code[0] == 't' && code[1] == 'e' && code[2] == 's')
 		{
-			itemName = itemName + " (Andariel/Duriel)";
+			itemName = itemName + L" (Andariel/Duriel)";
 		}
 		if (code[0] == 'c' && code[1] == 'e' && code[2] == 'h')
 		{
-			itemName = itemName + " (Mephtisto)";
+			itemName = itemName + L" (Mephtisto)";
 		}
 		if (code[0] == 'b' && code[1] == 'e' && code[2] == 't')
 		{
-			itemName = itemName + " (Diablo)";
+			itemName = itemName + L" (Diablo)";
 		}
 		if (code[0] == 'f' && code[1] == 'e' && code[2] == 'd')
 		{
-			itemName = itemName + " (Baal)";
+			itemName = itemName + L" (Baal)";
 		}
 	}
 
@@ -1287,7 +1284,7 @@ void Item::OrigGetItemName(UnitAny* item, string& itemName, char* code)
 	{
 		if (App.legacy.showRuneNumbers.toggle.isEnabled && D2COMMON_GetItemText(item->dwTxtFileNo)->nType == 74)
 		{
-			itemName = to_string(item->dwTxtFileNo - 609) + " - " + itemName;
+			itemName = to_wstring(item->dwTxtFileNo - 609) + L" - " + itemName;
 		}
 		else
 		{
@@ -1296,19 +1293,19 @@ void Item::OrigGetItemName(UnitAny* item, string& itemName, char* code)
 				int sockets = D2COMMON_GetUnitStat(item, STAT_SOCKETS, 0);
 				if (sockets > 0)
 				{
-					itemName += "(" + to_string(sockets) + ")";
+					itemName += L"(" + to_wstring(sockets) + L")";
 				}
 			}
 
 			if (App.legacy.showEthereal.toggle.isEnabled && item->pItemData->dwFlags & ITEM_ETHEREAL)
 			{
-				itemName = "Eth " + itemName;
+				itemName = L"Eth " + itemName;
 			}
 
 			/*show iLvl unless it is equal to 1*/
 			if (displayItemLevel && item->pItemData->dwItemLevel != 1)
 			{
-				itemName += " L" + to_string(item->pItemData->dwItemLevel);
+				itemName += L" L" + to_wstring(item->pItemData->dwItemLevel);
 			}
 		}
 	}
@@ -1317,16 +1314,16 @@ void Item::OrigGetItemName(UnitAny* item, string& itemName, char* code)
 		if (App.legacy.showSockets.toggle.isEnabled) {
 			int sockets = D2COMMON_GetUnitStat(item, STAT_SOCKETS, 0);
 			if (sockets > 0)
-				itemName += "(" + to_string(sockets) + ")";
+				itemName += L"(" + to_wstring(sockets) + L")";
 		}
 		if (App.legacy.showEthereal.toggle.isEnabled && item->pItemData->dwFlags & ITEM_ETHEREAL)
-			itemName += "(Eth)";
+			itemName += L"(Eth)";
 
 		if (displayItemLevel)
-			itemName += "(L" + to_string(item->pItemData->dwItemLevel) + ")";
+			itemName += L"(L" + to_wstring(item->pItemData->dwItemLevel) + L")";
 
 		if (App.legacy.showRuneNumbers.toggle.isEnabled && D2COMMON_GetItemText(item->dwTxtFileNo)->nType == 74)
-			itemName = "[" + to_string(item->dwTxtFileNo - 609) + "]" + itemName;
+			itemName = L"[" + to_wstring(item->dwTxtFileNo - 609) + L"]" + itemName;
 	}
 
 	/*Affix (Colors) Color Mod*/
@@ -1336,13 +1333,13 @@ void Item::OrigGetItemName(UnitAny* item, string& itemName, char* code)
 		//if( (code[0] == 'g' && code[1] == 'l'					) ||
 		//	(code[0] == 's' && code[1] == 'k' && code[2] == 'l' ) )
 		//{
-		//	itemName = "ÿc:" + itemName;
+		//	itemName = L"\xFF" L"c:" + itemName;
 		//}
 		///*Perfect Gems*/
 		//if( (code[0] == 'g' && code[1] == 'p'                   ) ||
 		//	(code[0] == 's' && code[1] == 'k' && code[2] == 'p' ) )
 		//{
-		//	itemName = "ÿc<" + itemName;
+		//	itemName = L"\xFF" L"c<" + itemName;
 		//}
 		/*Ethereal*/
 		if (item->pItemData->dwFlags & 0x400000)
@@ -1351,7 +1348,7 @@ void Item::OrigGetItemName(UnitAny* item, string& itemName, char* code)
 			if ((code[0] == 'u') ||
 				(code[0] == 'p' && code[1] == 'a' && code[2] >= 'b'))
 			{
-				itemName = "ÿc;" + itemName;
+				itemName = L"\xFF" L"c;" + itemName;
 			}
 		}
 		/*Runes*/
@@ -1359,33 +1356,33 @@ void Item::OrigGetItemName(UnitAny* item, string& itemName, char* code)
 		{
 			if (code[1] == '0')
 			{
-				itemName = "ÿc0" + itemName;
+				itemName = L"\xFF" L"c0" + itemName;
 			}
 			else if (code[1] == '1')
 			{
 				if (code[2] <= '6')
 				{
-					itemName = "ÿc4" + itemName;
+					itemName = L"\xFF" L"c4" + itemName;
 				}
 				else
 				{
-					itemName = "ÿc8" + itemName;
+					itemName = L"\xFF" L"c8" + itemName;
 				}
 			}
 			else if (code[1] == '2')
 			{
 				if (code[2] <= '2')
 				{
-					itemName = "ÿc8" + itemName;
+					itemName = L"\xFF" L"c8" + itemName;
 				}
 				else
 				{
-					itemName = "ÿc1" + itemName;
+					itemName = L"\xFF" L"c1" + itemName;
 				}
 			}
 			else if (code[1] == '3')
 			{
-				itemName = "ÿc1" + itemName;
+				itemName = L"\xFF" L"c1" + itemName;
 			}
 		}
 	}
@@ -1474,16 +1471,16 @@ __declspec(dllexport)void __stdcall BHOnProperties(wchar_t* wTxt)
 			}
 		}
 
-		string desc = item_desc_cache.Get(&uInfo);
-		if (desc != "") {
+		wstring desc = item_desc_cache.Get(&uInfo);
+		if (desc != L"") {
 			UnitAny* pPlayer = D2CLIENT_GetPlayerUnit();
 			ItemsTxt* itemTxt = D2COMMON_GetItemText(pItem->dwTxtFileNo);
 			if (!pPlayer || !itemTxt) {
 				return;
 			}
-			string itemName = GetItemName(pItem);
+			wstring wItemName = AnsiToWide(GetItemName(pItem));
 			int maxTextLimit = ITEM_TEXT_SIZE_LIMIT;
-			maxTextLimit -= itemName.length() + 3; // color code added later
+			maxTextLimit -= wItemName.length() + 3; // color code added later
 			maxTextLimit -= wcslen(wTxt) + 3; // color code added later
 
 			bool isEthereal = (pItem->pItemData->dwFlags & ITEM_ETHEREAL) > 0;
@@ -1960,22 +1957,19 @@ __declspec(dllexport)void __stdcall BHOnProperties(wchar_t* wTxt)
 			maxTextLimit = maxTextLimit > MAX_ITEM_TEXT_SIZE ? MAX_ITEM_TEXT_SIZE : maxTextLimit;
 
 			bool shouldShowDesc = maxTextLimit > 4;
-			if (desc.length() > maxTextLimit && shouldShowDesc)
+			if (desc.length() > (size_t)maxTextLimit && shouldShowDesc)
 			{
 				desc.resize(maxTextLimit - 4);
-				desc += "...";
+				desc += L"...";
 			}
 
 			if (shouldShowDesc)
 			{
-				static wchar_t wDesc[MAX_ITEM_TEXT_SIZE];
-				auto chars_written = MultiByteToWideChar(CODE_PAGE, 0, desc.c_str(), -1, wDesc, MAX_ITEM_TEXT_SIZE);
-
 				int aLen = wcslen(wTxt);
 				if (aLen < ITEM_TEXT_SIZE_LIMIT) {
 					swprintf_s(wTxt + aLen, ITEM_TEXT_SIZE_LIMIT - aLen,
 						L"%s%s\n",
-						(chars_written > 0) ? wDesc : L"\377c1Item Description is too long.",
+						desc.c_str(),
 						GetColorCode(TextColor::White).c_str()
 					);
 				}

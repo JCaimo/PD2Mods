@@ -56,9 +56,9 @@ public:
 	{
 	}
 
-	static const string tokenDelims;
+	static const wstring tokenDelims;
 	static void         BuildConditions(vector<Condition*>& conditions,
-		string              token);
+		wstring              token);
 	static void ProcessConditions(vector<Condition*>& rawConditions,
 		vector<Condition*>& processedConditions);
 	static void AddOperand(vector<Condition*>& conditions,
@@ -821,7 +821,7 @@ private:
 class AddCondition : public Condition
 {
 public:
-	AddCondition(string& k,
+	AddCondition(wstring& k,
 		BYTE         op,
 		unsigned int target) : key(k),
 		operation(op),
@@ -832,11 +832,11 @@ public:
 	};
 private:
 	BYTE           operation;
-	vector<string> codes;
+	vector<wstring> codes;
 	vector<shared_ptr<Formula<FormulaContext>>> fs;
 	vector<tuple<DWORD, DWORD>>  stats;
 	unsigned int   targetStat;
-	string         key;
+	wstring         key;
 	void           Init();
 	bool           EvaluateInternal(UnitItemInfo* uInfo,
 		Condition* arg1,
@@ -1031,7 +1031,7 @@ private:
 class FormulaCondition : public Condition
 {
 public:
-	FormulaCondition(string& k,
+	FormulaCondition(wstring& k,
 		BYTE         op,
 		unsigned int target,
 		unsigned int target2);
@@ -1040,7 +1040,7 @@ private:
 	BYTE           operation;
 	unsigned int   targetStat;
 	unsigned int   targetStat2;
-	string         key;
+	wstring         key;
 	bool           EvaluateInternal(UnitItemInfo* uInfo,
 		Condition* arg1,
 		Condition* arg2);
@@ -1051,21 +1051,21 @@ extern FalseCondition* falseCondition;
 
 struct ActionReplace
 {
-	string key;
-	string value;
+	wstring key;
+	wstring value;
 };
 
 struct ColorReplace
 {
-	string key;
+	wstring key;
 	int    value;
 };
 
 struct Action
 {
 	bool   stopProcessing;
-	string name;
-	string description;
+	wstring name;
+	wstring description;
 	int    colorOnMap;
 	int    borderColor;
 	int    dotColor;
@@ -1085,8 +1085,8 @@ struct Action
 		soundID(0),
 		pingLevel(-1),
 		stopProcessing(true),
-		name(""),
-		description("")
+		name(L""),
+		description(L"")
 	{
 	}
 };
@@ -1117,7 +1117,7 @@ struct Rule
 	vector<ReplacementValue> description;
 
 	Rule(vector<Condition*>& inputConditions,
-		string* str);
+		wstring* str);
 
 	// TODO: Should this really be defined in the header? This will force it to be inlined AFAIK. -ybd
 	bool Evaluate(UnitItemInfo* uInfo)
@@ -1130,35 +1130,35 @@ struct Rule
 		return EvaluateTree(uInfo);
 	}
 
-	string ApplyName(ReplaceContext& ctx);
-	string ApplyDescription(ReplaceContext& ctx);
+	wstring ApplyName(ReplaceContext& ctx);
+	wstring ApplyDescription(ReplaceContext& ctx);
 	bool EvaluateTree(UnitItemInfo* uInfo);
 private:
 	bool Convert();
 	bool EvaluateTreeInternal(UnitItemInfo* uInfo, size_t id);
 };
 
-class ItemDescLookupCache : public RuleLookupCache<string>
+class ItemDescLookupCache : public RuleLookupCache<wstring>
 {
-	string make_cached_T(UnitItemInfo* uInfo) override;
-	string to_str(const string& name) override;
+	wstring make_cached_T(UnitItemInfo* uInfo) override;
+	string to_str(const wstring& name) override;
 
 public:
 	ItemDescLookupCache(const std::vector<Rule*>& RuleList) :
-		RuleLookupCache<string>(RuleList)
+		RuleLookupCache<wstring>(RuleList)
 	{
 	}
 };
 
-class ItemNameLookupCache : public RuleLookupCache<string, const string&>
+class ItemNameLookupCache : public RuleLookupCache<wstring, const wstring&>
 {
-	string make_cached_T(UnitItemInfo* uInfo,
-		const string& name) override;
-	string to_str(const string& name) override;
+	wstring make_cached_T(UnitItemInfo* uInfo,
+		const wstring& name) override;
+	string to_str(const wstring& name) override;
 
 public:
 	ItemNameLookupCache(const std::vector<Rule*>& RuleList) :
-		RuleLookupCache<string, const string&>(RuleList)
+		RuleLookupCache<wstring, const wstring&>(RuleList)
 	{
 	}
 };
@@ -1178,8 +1178,8 @@ public:
 extern vector<Rule*>                RuleList;
 extern vector<Rule*>                MapRuleList;
 extern vector<Rule*>                IgnoreRuleList;
-extern vector<pair<string, string>> rules;
-extern vector<pair<string, string>> aliases;
+extern vector<pair<wstring, wstring>> rules;
+extern vector<pair<wstring, wstring>> aliases;
 extern ItemDescLookupCache          item_desc_cache;
 extern ItemNameLookupCache          item_name_cache;
 extern MapActionLookupCache         map_action_cache;
@@ -1190,41 +1190,41 @@ namespace ItemDisplay
 	void UninitializeItemRules();
 }
 
-void            BuildAction(string* str,
+void            BuildAction(wstring* str,
 	Action* act);
-int ParsePingLevel(Action* act, const string& reg_string);
-int ParseSoundID(Action* act, const string& reg_string);
-string ParseDescription(Action* act);
+int ParsePingLevel(Action* act, const wstring& reg_string);
+int ParseSoundID(Action* act, const wstring& reg_string);
+wstring ParseDescription(Action* act);
 int    ParseMapColor(Action* act,
-	const string& reg_string);
+	const wstring& reg_string);
 void HandleUnknownItemCode(char* code,
 	char* tag);
-BYTE        GetOperation(string* op);
+BYTE        GetOperation(wstring* op);
 inline bool IntegerCompare(int Lvalue,
 	int          operation,
 	int Rvalue);
 void GetItemName(UnitItemInfo* uInfo,
-	string& name);
+	wstring& name);
 void TrimItemText(UnitItemInfo* uInfo,
-	string& name,
+	wstring& name,
 	BOOL bLimit);
-string NameVarSockets(UnitItemInfo* uInfo);
-string NameVarRuneNum(UnitItemInfo* uInfo);
-string NameVarRuneName(UnitItemInfo* uInfo);
-string NameVarGemLevel(UnitItemInfo* uInfo);
-string NameVarGemType(UnitItemInfo* uInfo);
-string NameVarIlvl(UnitItemInfo* uInfo);
-string NameVarAlvl(UnitItemInfo* uInfo);
-string NameVarCraftAlvl(UnitItemInfo* uInfo);
-string NameVarRerollAlvl(UnitItemInfo* uInfo);
-string NameVarLevelReq(UnitItemInfo* uInfo);
-string NameVarWeaponSpeed(ItemsTxt* itemTxt);
-string NameVarRangeAdder(ItemsTxt* itemTxt);
-string NameVarBuyValue(UnitItemInfo* uInfo, ItemsTxt* itemTxt);
-string NameVarSellValue(UnitItemInfo* uInfo, ItemsTxt* itemTxt);
-string NameVarQty(UnitItemInfo* uInfo);
-string NameVarAllRes(UnitItemInfo* uInfo);
-string NameVarEd(UnitItemInfo* uInfo);
+wstring NameVarSockets(UnitItemInfo* uInfo);
+wstring NameVarRuneNum(UnitItemInfo* uInfo);
+wstring NameVarRuneName(UnitItemInfo* uInfo);
+wstring NameVarGemLevel(UnitItemInfo* uInfo);
+wstring NameVarGemType(UnitItemInfo* uInfo);
+wstring NameVarIlvl(UnitItemInfo* uInfo);
+wstring NameVarAlvl(UnitItemInfo* uInfo);
+wstring NameVarCraftAlvl(UnitItemInfo* uInfo);
+wstring NameVarRerollAlvl(UnitItemInfo* uInfo);
+wstring NameVarLevelReq(UnitItemInfo* uInfo);
+wstring NameVarWeaponSpeed(ItemsTxt* itemTxt);
+wstring NameVarRangeAdder(ItemsTxt* itemTxt);
+wstring NameVarBuyValue(UnitItemInfo* uInfo, ItemsTxt* itemTxt);
+wstring NameVarSellValue(UnitItemInfo* uInfo, ItemsTxt* itemTxt);
+wstring NameVarQty(UnitItemInfo* uInfo);
+wstring NameVarAllRes(UnitItemInfo* uInfo);
+wstring NameVarEd(UnitItemInfo* uInfo);
 
 BYTE GetAffixLevel(BYTE ilvl,
 	BYTE qlvl,

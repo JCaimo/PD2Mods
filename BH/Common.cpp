@@ -89,6 +89,24 @@ char* UnicodeToAnsi(const wchar_t* str)
 	return buf;
 }
 
+std::wstring AnsiToWide(const std::string& str)
+{
+	if (str.empty()) return std::wstring();
+	int len = MultiByteToWideChar(CODE_PAGE, 0, str.c_str(), -1, NULL, 0);
+	std::wstring buf(len - 1, 0);
+	MultiByteToWideChar(CODE_PAGE, 0, str.c_str(), -1, &buf[0], len);
+	return buf;
+}
+
+std::string WideToAnsi(const std::wstring& str)
+{
+	if (str.empty()) return std::string();
+	int len = WideCharToMultiByte(CODE_PAGE, 0, str.c_str(), -1, NULL, 0, NULL, NULL);
+	std::string buf(len - 1, 0);
+	WideCharToMultiByte(CODE_PAGE, 0, str.c_str(), -1, &buf[0], len, NULL, NULL);
+	return buf;
+}
+
 std::wstring GetColorCode(int ColNo)
 {
 	wchar_t* pCol = D2LANG_GetLocaleText(3994);
@@ -97,11 +115,26 @@ std::wstring GetColorCode(int ColNo)
 	return Result.str();
 }
 
+std::wstring MaybeStripColorPrefixW(std::wstring str) {
+	if (str.size() > 3 && str[0] == L'\xFF' && str[1] == L'c') {
+		str = str.substr(3, str.size() - 3);
+	}
+	return str;
+}
+
 std::string Trim(std::string source) {
 	source = source.erase(0, source.find_first_not_of(" "));
 	source = source.erase(source.find_last_not_of(" ") + 1);
 	source = source.erase(0, source.find_first_not_of("\t"));
 	source = source.erase(source.find_last_not_of("\t") + 1);
+	return source;
+}
+
+std::wstring TrimW(std::wstring source) {
+	source = source.erase(0, source.find_first_not_of(L" "));
+	source = source.erase(source.find_last_not_of(L" ") + 1);
+	source = source.erase(0, source.find_first_not_of(L"\t"));
+	source = source.erase(source.find_last_not_of(L"\t") + 1);
 	return source;
 }
 

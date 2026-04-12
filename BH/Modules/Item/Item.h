@@ -79,7 +79,7 @@ public:
 	void OnLeftClick(bool up, int x, int y, bool* block);
 
 	static void __fastcall ItemNamePatch(wchar_t* name, UnitAny* pItem, int nameSize);
-	static void OrigGetItemName(UnitAny* item, string& itemName, char* code);
+	static void OrigGetItemName(UnitAny* item, wstring& itemName, char* code);
 	static void __stdcall OnProperties(wchar_t* wTxt);
 	static BOOL __stdcall OnDamagePropertyBuild(UnitAny* pItem, DamageStats* pDmgStats, int nStat, wchar_t* wOut);
 	static void __stdcall OnPropertyBuild(wchar_t* wOut, int nStat, UnitAny* pItem, int nStatParam);
@@ -142,7 +142,7 @@ bool IsInitialized();
 
 // Item attributes from ItemTypes.txt and Weapon/Armor/Misc.txt
 struct ItemAttributes {
-	std::string name;
+	std::wstring name;
 	WORD category;
 	BYTE width;
 	BYTE height;
@@ -160,7 +160,7 @@ struct ItemAttributes {
 
 // Properties from ItemStatCost.txt
 struct StatProperties {
-	std::string name;
+	std::wstring name;
 	//std::string localizedName;
 	ItemStatCostTxt* pItemStatCostTxt;
 	unsigned short statId;

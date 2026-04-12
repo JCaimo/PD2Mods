@@ -12,7 +12,7 @@
 map<std::string, std::unique_ptr<Mustache::AMustacheTemplate>> StashExport::MustacheTemplates;
 UnitAny* StashExport::viewingUnit;
 
-#define NAMEOF(statid) (AllStatList[statid]->name)
+#define NAMEOF(statid) (WideToAnsi(AllStatList[statid]->name))
 
 using namespace Drawing;
 

@@ -52,7 +52,10 @@
 void Tokenize(const std::string& str, std::vector<std::string>& tokens, const std::string& delimiters);
 wchar_t* AnsiToUnicode(const char* str);
 char* UnicodeToAnsi(const wchar_t* str);
+std::wstring AnsiToWide(const std::string& str);
+std::string WideToAnsi(const std::wstring& str);
 std::wstring GetColorCode(int ColNo);
+std::wstring MaybeStripColorPrefixW(std::wstring str);
 template <class T>
 bool from_string(T& t,
 	const std::string& s,
@@ -73,6 +76,7 @@ int StringToNumber(std::string str);
 std::string MaybeStripColorPrefix(std::string str);
 
 std::string Trim(std::string source);
+std::wstring TrimW(std::wstring source);
 
 void PrintText(DWORD Color, char* szText, ...);
 

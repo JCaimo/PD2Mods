@@ -234,7 +234,7 @@ void StatsDisplay::LoadConfig()
 		if (!(ss >> statId).fail() && statId < STAT_MAX)
 		{
 			DisplayedStat* customStat = new DisplayedStat();
-			customStat->name = AllStatList[statId]->name;
+			customStat->name = WideToAnsi(AllStatList[statId]->name);
 			customStat->id = statId;
 			customStat->useValue = false;
 			// Getting rid of the check for sp->saveParamBits > 0 to display weapon mastery values
