@@ -1550,7 +1550,7 @@ wstring ReplacementSpec::ReplaceConditionalLine(ReplaceContext& ctx, const Repla
 	}
 	if (ctx.nmagStaffmod) {
 		ctx.blockedNL = true;
-		return L"\n";
+		return L"\r";
 	}
 	return L"";
 }
@@ -1699,11 +1699,13 @@ ReplaceContext::ReplaceContext(UnitItemInfo* info, wstring name, bool limit) :
 		(info->item->pItemData->dwQuality >= ITEM_QUALITY_MAGIC || (info->item->pItemData->dwFlags & ITEM_RUNEWORD) > 0)) ||
 		inShop;
 
-	// Check if non-mag item capable of having staffmods
+	// Check if non-mag item capable of having staffmods or similar mods
 	nmagStaffmod = ((info->item->pItemData->dwQuality == ITEM_QUALITY_INFERIOR ||
 		info->item->pItemData->dwQuality == ITEM_QUALITY_NORMAL ||
 		info->item->pItemData->dwQuality == ITEM_QUALITY_SUPERIOR) &&
-		info->attrs->staffmodClass < CLASS_NA);
+		(info->attrs->staffmodClass < CLASS_NA ||
+		(text->wautoprefix > 0 && text->wautoprefix != 308) ||
+		(info->item->pItemData->dwQuality == ITEM_QUALITY_SUPERIOR)));
 }
 
 wstring ReplacementValue::Replace(ReplaceContext& ctx) const
