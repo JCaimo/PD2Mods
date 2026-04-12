@@ -433,7 +433,7 @@ extern "C" {
 		return 0;
 	}
 
-	__declspec(dllexport) int __cdecl BHShowPlayersGear()
+	__declspec(dllexport) UnitAny* __cdecl BHShowPlayersGear()
 	{
 		UnitAny* selectedUnit = D2CLIENT_GetSelectedUnit();
 		if (selectedUnit && selectedUnit->dwMode != PLAYER_MODE_DEATH && selectedUnit->dwMode != PLAYER_MODE_DEAD && (
@@ -449,8 +449,9 @@ extern "C" {
 			{
 				D2CLIENT_SetUIVar(0x01, 0, 0);
 			}
+			return selectedUnit;
 		}
-		return 1;
+		return NULL;
 	}
 
 #ifdef __cplusplus
