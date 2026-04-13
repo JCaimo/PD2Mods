@@ -25,3 +25,4 @@ SoundInstance* __stdcall D2CLIENT_GetExistingSoundInstanceInQueue_STUB(int nSoun
 void __stdcall D2CLIENT_AdjustSoundBasedOnCoords_STUB(float* fPos, UnitAny* pUnit, int nSound);
 float __stdcall D2CLIENT_SoundTestCollision_STUB(int nSound, UnitAny* pTarget);
 void __stdcall D2CLIENT_LinkSoundInstanceToClientUnit_STUB(UnitAny* pUnit, int nSoundInstanceId);
+int __stdcall D2COMMON_GetStatsWithIdFromStatlist_STUB(StatList* pStatlist, int* pBuffer, unsigned int nStatId, int nLayer);

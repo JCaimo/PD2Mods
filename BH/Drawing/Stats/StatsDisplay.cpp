@@ -658,6 +658,8 @@ void StatsDisplay::OnDraw()
 		fcr_key = D2COMMON_GetUnitState(unit, 140) ? kBearTxtFileNoAlias : fcr_key;
 
 		auto skillId = !isMerc ? unit->pInfo->pRightSkill->pSkillInfo->wSkillId : 0;
+		auto skillLevel = !isMerc ? unit->pInfo->pRightSkill->skillLevel : 1;
+		SkillsTxt* pSkillsTxt = GetSkillRecord(skillId);
 
 		// Set Lighting frames FCR
 		switch (skillId) {
@@ -718,13 +720,25 @@ void StatsDisplay::OnDraw()
 		int nOWFrameDamage = D2GAME_CalcOpenWoundsDamage(vLevelThreshold, player_level) + 25;
 		int nOWCharDPS = (nOWFrameDamage * 25) / 256;
 
+		int nCrushingBlowChance = D2COMMON_GetUnitStat(unit, STAT_CRUSHINGBLOW, 0) + GetMasteryStat(unit, STAT_CRUSHINGBLOW, SKILL_TWOHANDMASTERY);
+		if (pSkillsTxt && skillId == SKILL_SMITE)
+		{
+			nCrushingBlowChance += D2COMMON_10786_SKILLS_EvaluateSkillFormula(unit, pSkillsTxt->dwCalc3, skillId, skillLevel);
+		}
+
+		int nCrushingBlowEfficiency = 100 + D2COMMON_GetUnitStat(unit, STAT_CRUSHINGBLOW_EFFICIENCY, 0) + GetMasteryStat(unit, STAT_CRUSHINGBLOW_EFFICIENCY, SKILL_TWOHANDMASTERY);
+		int nCriticalStrike = D2COMMON_GetUnitStat(unit, STAT_CRITICALSTRIKE, 0) + D2COMMON_GetUnitStat(unit, STAT_ITEM_CRITICALSTRIKE_CHANCE, 0) + GetMasteryStat(unit, STAT_CRITICALSTRIKE, SKILL_ONEHANDMASTERY) + GetMasteryStat(unit, STAT_CRITICALSTRIKE, SKILL_THROWINGMASTERY) + GetMasteryStat(unit, STAT_CRITICALSTRIKE, SKILL_CLAWANDDAGGERMASTERY);
+		int nCriticalStrikeMultiplier = 200 + D2COMMON_GetUnitStat(unit, STAT_CRITICALSTRIKE_MULTIPLIER, 0) + GetMasteryStat(unit, STAT_CRITICALSTRIKE_MULTIPLIER, SKILL_JAVELINANDSPEARMASTERY);
+		int nPierce = D2COMMON_GetUnitStat(unit, STAT_PIERCINGATTACK, 0) + D2COMMON_GetUnitStat(unit, STAT_PIERCE, 0) + GetMasteryStat(unit, STAT_PIERCE, SKILL_THROWINGMASTERY);
+
 		Texthook::Draw(column1,
 			(y += 16),
 			None,
 			6,
 			Gold,
-			L"Crushing Blow:ÿc0 %d",
-			static_cast<int>(D2COMMON_GetUnitStat(unit, STAT_CRUSHINGBLOW, 0)));
+			L"Crushing Blow:ÿc0 %d / %d%%",
+			static_cast<int>(nCrushingBlowChance),
+			static_cast<int>(nCrushingBlowEfficiency));
 		Texthook::Draw(column2,
 			y,
 			None,
@@ -738,16 +752,18 @@ void StatsDisplay::OnDraw()
 			None,
 			6,
 			Gold,
-			L"Deadly Strike:ÿc0 %d / %d",
+			L"Deadly Strike:ÿc0 %d / %d / %d%%",
 			min(static_cast<int>(D2COMMON_GetUnitStat(unit, STAT_DEADLYSTRIKE, 0)), min(75 + D2COMMON_GetUnitStat(unit, STAT_MAXDEADLYSTRIKE, 0), 100)),
-			min(75 + D2COMMON_GetUnitStat(unit, STAT_MAXDEADLYSTRIKE, 0), 100));
+			min(75 + D2COMMON_GetUnitStat(unit, STAT_MAXDEADLYSTRIKE, 0), 100),
+			150 + D2COMMON_GetUnitStat(unit, STAT_DEADLYSTRIKE_MULTIPLIER, 0));
 		Texthook::Draw(column2,
 			y,
 			None,
 			6,
 			Gold,
-			L"Critical Strike: ÿc0%d / 75",
-			min(static_cast<int>(D2COMMON_GetUnitStat(unit, STAT_CRITICALSTRIKE, 0) + D2COMMON_GetUnitStat(unit, STAT_ITEM_CRITICALSTRIKE_CHANCE, 0)), 75));
+			L"Critical Strike: ÿc0%d / 75 / %d%%",
+			min(static_cast<int>(nCriticalStrike), 75),
+			nCriticalStrikeMultiplier);
 		Texthook::Draw(column1,
 			(y += 16),
 			None,
@@ -768,8 +784,7 @@ void StatsDisplay::OnDraw()
 			6,
 			Gold,
 			L"Projectile Pierce:ÿc0 %d",
-			static_cast<int>(D2COMMON_GetUnitStat(unit, STAT_PIERCINGATTACK, 0)) +
-			static_cast<int>(D2COMMON_GetUnitStat(unit, STAT_PIERCE, 0)));
+			static_cast<int>(nPierce));
 		Texthook::Draw(column2,
 			y,
 			None,

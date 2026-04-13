@@ -279,3 +279,18 @@ __declspec(naked) void __stdcall D2CLIENT_LinkSoundInstanceToClientUnit_STUB(Uni
 		retn 8
 	}
 }
+
+__declspec(naked) int __stdcall D2COMMON_GetStatsWithIdFromStatlist_STUB(StatList* pStatlist, int* pBuffer, unsigned int nStatId, int nLayer)
+{
+	__asm
+	{
+		push ECX
+		mov EAX, [esp + 8]                                   // pStatlist
+		mov ECX, [esp + 12]                                  // pBuffer
+		push[esp + 20]                                      // nLayer
+		push[esp + 20]                                      // nStatId
+		call D2COMMON_GetStatsWithIdFromStatlist             // 0x382F0
+		pop ECX
+		retn 16
+	}
+}
