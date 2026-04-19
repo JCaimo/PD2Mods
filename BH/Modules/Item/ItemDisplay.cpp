@@ -365,7 +365,9 @@ int GetAdjustedUnitStat(UnitItemInfo* uInfo, DWORD stat, DWORD layer)
 		stat == STAT_MINIMUMDAMAGE ||				// return base min 1h weapon damage
 		stat == STAT_MAXIMUMDAMAGE ||				// return base max 1h weapon damage
 		stat == STAT_SECONDARYMINIMUMDAMAGE ||		// return base min 2h weapon damage
-		stat == STAT_SECONDARYMAXIMUMDAMAGE			// return base max 2h weapon damage
+		stat == STAT_SECONDARYMAXIMUMDAMAGE	||		// return base max 2h weapon damage
+		stat == STAT_MINIMUMTHROWINGDAMAGE ||		// return min throw weapon damage
+		stat == STAT_MAXIMUMTHROWINGDAMAGE		    // return max throw weapon damage
 		) {
 		tmpVal = GetStatFromList(uInfo, stat);
 	}
@@ -1033,6 +1035,10 @@ struct ReplacementSpec {
 	static wstring ReplaceUpLvl(ReplaceContext& ctx, const ReplacementValue& val);
 	// %MAXSOCKETS%
 	static wstring ReplaceMaxSockets(ReplaceContext& ctx, const ReplacementValue& val);
+	// %MINDMG%
+	static wstring ReplaceMinDamage(ReplaceContext& ctx, const ReplacementValue& val);
+	// %MAXDMG%
+	static wstring ReplaceMaxDamage(ReplaceContext& ctx, const ReplacementValue& val);
 
 	// DYNAMIC keywords
 	// %STAT%
@@ -1108,6 +1114,8 @@ unordered_map<wstring, ReplacementSpec> ReplacementMap = {
 	{ L"UPDEX", { 0, ReplacementSpec::ReplaceUpDex } },
 	{ L"UPLVL", { 0, ReplacementSpec::ReplaceUpLvl } },
 	{ L"MAXSOCKETS", { 0, ReplacementSpec::ReplaceMaxSockets } },
+	{ L"MINDMG", { 0, ReplacementSpec::ReplaceMinDamage } },
+	{ L"MAXDMG", { 0, ReplacementSpec::ReplaceMaxDamage } },
 	// named stats
 	{ L"EDEF", { 0, ReplacementSpec::ReplaceNamedStat(STAT_ENHANCEDDEFENSE) } },
 	{ L"EDAM", { 0, ReplacementSpec::ReplaceNamedStat(STAT_ENHANCEDMAXIMUMDAMAGE) } },
@@ -1128,8 +1136,6 @@ unordered_map<wstring, ReplacementSpec> ReplacementMap = {
 	{ L"STR", { 0, ReplacementSpec::ReplaceNamedStat(STAT_STRENGTH) } },
 	{ L"DEX", { 0, ReplacementSpec::ReplaceNamedStat(STAT_DEXTERITY) } },
 	{ L"FRW", { 0, ReplacementSpec::ReplaceNamedStat(STAT_FASTERRUNWALK) } },
-	{ L"MINDMG", { 0, ReplacementSpec::ReplaceNamedStat(STAT_MINIMUMDAMAGE) } },
-	{ L"MAXDMG", { 0, ReplacementSpec::ReplaceNamedStat(STAT_MAXIMUMDAMAGE) } },
 	{ L"AR", { 0, ReplacementSpec::ReplaceNamedStat(STAT_ATTACKRATING) } },
 	{ L"DTM", { 0, ReplacementSpec::ReplaceNamedStat(STAT_DAMAGETOMANA) } },
 	{ L"MAEK", { 0, ReplacementSpec::ReplaceNamedStat(STAT_MANAAFTEREACHKILL) } },
@@ -1535,6 +1541,22 @@ wstring ReplacementSpec::ReplaceMaxSockets(ReplaceContext& ctx, const Replacemen
 	return buffer;
 }
 
+wstring ReplacementSpec::ReplaceMinDamage(ReplaceContext& ctx, const ReplacementValue& val)
+{
+	auto dmg = MinMaxDamageCondition::GetValue(MinMaxDamageCondition::DamageType::MIN, ctx.info);
+	wchar_t buffer[16];
+	swprintf(buffer, 16, L"%d", dmg);
+	return buffer;
+}
+
+wstring ReplacementSpec::ReplaceMaxDamage(ReplaceContext& ctx, const ReplacementValue& val)
+{
+	auto dmg = MinMaxDamageCondition::GetValue(MinMaxDamageCondition::DamageType::MAX, ctx.info);
+	wchar_t buffer[16];
+	swprintf(buffer, 16, L"%d", dmg);
+	return buffer;
+}
+
 wstring ReplacementSpec::ReplaceConditionalSpace(ReplaceContext& ctx, const ReplacementValue& val)
 {
 	return L"\b";
@@ -1591,7 +1613,9 @@ wstring ReplacementSpec::ReplaceStat(ReplaceContext& ctx, const ReplacementValue
 		stat == STAT_MINIMUMDAMAGE ||				// return base min 1h weapon damage
 		stat == STAT_MAXIMUMDAMAGE ||				// return base max 1h weapon damage
 		stat == STAT_SECONDARYMINIMUMDAMAGE ||		// return base min 2h weapon damage
-		stat == STAT_SECONDARYMAXIMUMDAMAGE			// return base max 2h weapon damage
+		stat == STAT_SECONDARYMAXIMUMDAMAGE	||		// return base max 2h weapon damage
+		stat == STAT_MINIMUMTHROWINGDAMAGE ||		// return min throw weapon damage
+		stat == STAT_MAXIMUMTHROWINGDAMAGE		    // return max throw weapon damage
 		)
 	{
 		value = GetStatFromList(ctx.info, stat);
@@ -2300,7 +2324,7 @@ std::unordered_map<std::wstring, FormulaVarDefinition<FormulaContext>> formulaVa
 		}
 	} },
 	{ L"maxdmg", { 0, [](FormulaStatus& err, UnitItemInfo* uInfo, const std::vector<int>& ids) -> float {
-			return GetAdjustedUnitStat(uInfo, STAT_MAXIMUMDAMAGE, 0);
+			return MinMaxDamageCondition::GetValue(MinMaxDamageCondition::DamageType::MAX, uInfo);
 		}
 	} },
 	{ L"maxdur", { 0, [](FormulaStatus& err, UnitItemInfo* uInfo, const std::vector<int>& ids) -> float {
@@ -2329,7 +2353,7 @@ std::unordered_map<std::wstring, FormulaVarDefinition<FormulaContext>> formulaVa
 		}
 	} },
 	{ L"mindmg", { 0, [](FormulaStatus& err, UnitItemInfo* uInfo, const std::vector<int>& ids) -> float {
-			return GetAdjustedUnitStat(uInfo, STAT_MINIMUMDAMAGE, 0);
+			return MinMaxDamageCondition::GetValue(MinMaxDamageCondition::DamageType::MIN, uInfo);
 		}
 	} },
 	{ L"misc", { 0, [](FormulaStatus& err, UnitItemInfo* uInfo, const std::vector<int>& ids) -> float {
@@ -4084,10 +4108,10 @@ void Condition::BuildConditions(vector<Condition*>& conditions,
 		Condition::AddOperand(conditions, new ItemStatCondition(STAT_FASTERRUNWALK, 0, operation, value, value2));
 		break;
 	case COND_MINDMG:
-		Condition::AddOperand(conditions, new ItemStatCondition(STAT_MINIMUMDAMAGE, 0, operation, value, value2));
+		Condition::AddOperand(conditions, new MinMaxDamageCondition(MinMaxDamageCondition::DamageType::MIN, operation, value, value2));
 		break;
 	case COND_MAXDMG:
-		Condition::AddOperand(conditions, new ItemStatCondition(STAT_MAXIMUMDAMAGE, 0, operation, value, value2));
+		Condition::AddOperand(conditions, new MinMaxDamageCondition(MinMaxDamageCondition::DamageType::MAX, operation, value, value2));
 		break;
 	case COND_AR:
 		Condition::AddOperand(conditions, new ItemStatCondition(STAT_ATTACKRATING, 0, operation, value, value2));
@@ -5087,7 +5111,9 @@ bool ItemStatCondition::EvaluateInternal(UnitItemInfo* uInfo,
 		itemStat == STAT_MINIMUMDAMAGE ||				// return base min 1h weapon damage
 		itemStat == STAT_MAXIMUMDAMAGE ||				// return base max 1h weapon damage
 		itemStat == STAT_SECONDARYMINIMUMDAMAGE ||		// return base min 2h weapon damage
-		itemStat == STAT_SECONDARYMAXIMUMDAMAGE			// return base max 2h weapon damage
+		itemStat == STAT_SECONDARYMAXIMUMDAMAGE	||		// return base max 2h weapon damage
+		itemStat == STAT_MINIMUMTHROWINGDAMAGE ||		// return min throw weapon damage
+		itemStat == STAT_MAXIMUMTHROWINGDAMAGE			// return max throw weapon damage
 		)
 	{
 		return IntegerCompare(GetStatFromList(uInfo, itemStat), operation, targetStat, targetStat2);
@@ -5165,6 +5191,10 @@ void AddCondition::Init()
 			}
 			int param1 = match[2].length() > 0 ? stoi(match[2].str()) : id;
 			int param2 = match[3].length() > 0 ? stoi(match[3].str()) : 0;
+			if (match[1] == L"MAXDMG" || match[1] == L"MINDMG") {
+				stats.emplace_back(param1, INT_MAX);
+				continue;
+			}
 			stats.emplace_back(param1, param2);
 		}
 	}
@@ -5184,6 +5214,11 @@ bool AddCondition::EvaluateInternal(UnitItemInfo* uInfo,
 		{
 			tmpVal /= 256;
 		}
+		// layer used to flag MIN/MAXDMG named stat
+		else if (layer == INT_MAX && (stat == STAT_MINIMUMDAMAGE || stat == STAT_MAXIMUMDAMAGE))
+		{
+			tmpVal = MinMaxDamageCondition::GetValue((MinMaxDamageCondition::DamageType)(stat - STAT_MINIMUMDAMAGE), uInfo);
+		}
 		else if (
 			stat == STAT_ENHANCEDDEFENSE ||				// return 0
 			stat == STAT_ENHANCEDMAXIMUMDAMAGE ||		// return 0
@@ -5191,7 +5226,9 @@ bool AddCondition::EvaluateInternal(UnitItemInfo* uInfo,
 			stat == STAT_MINIMUMDAMAGE ||				// return base min 1h weapon damage
 			stat == STAT_MAXIMUMDAMAGE ||				// return base max 1h weapon damage
 			stat == STAT_SECONDARYMINIMUMDAMAGE ||		// return base min 2h weapon damage
-			stat == STAT_SECONDARYMAXIMUMDAMAGE			// return base max 2h weapon damage
+			stat == STAT_SECONDARYMAXIMUMDAMAGE	||		// return base max 2h weapon damage
+			stat == STAT_MINIMUMTHROWINGDAMAGE ||		// return min throw weapon damage
+			stat == STAT_MAXIMUMTHROWINGDAMAGE		    // return max throw weapon damage
 			)
 		{
 			tmpVal = GetStatFromList(uInfo, stat);
@@ -5451,6 +5488,35 @@ FormulaCondition::FormulaCondition(wstring& k,
 	conditionType = CT_Operand;
 	f = formulaMap.find(key)->second.get();
 };
+
+int MinMaxDamageCondition::GetValue(DamageType type, UnitItemInfo* uInfo)
+{
+	switch (type) {
+		case DamageType::MIN:
+		{
+			int one = GetAdjustedUnitStat(uInfo, STAT_MINIMUMDAMAGE, 0);
+			int two = GetAdjustedUnitStat(uInfo, STAT_SECONDARYMINIMUMDAMAGE, 0);
+			int thr = GetAdjustedUnitStat(uInfo, STAT_MINIMUMTHROWINGDAMAGE, 0);
+			return max(one, max(two, thr));
+		}
+		case DamageType::MAX:
+		{
+			int one = GetAdjustedUnitStat(uInfo, STAT_MAXIMUMDAMAGE, 0);
+			int two = GetAdjustedUnitStat(uInfo, STAT_SECONDARYMAXIMUMDAMAGE, 0);
+			int thr = GetAdjustedUnitStat(uInfo, STAT_MAXIMUMTHROWINGDAMAGE, 0);
+			return max(one, max(two, thr));
+			return 0;
+		}
+	}
+	return 0;
+}
+
+bool MinMaxDamageCondition::EvaluateInternal(UnitItemInfo* uInfo,
+	Condition* arg1,
+	Condition* arg2)
+{
+	return IntegerCompare(MinMaxDamageCondition::GetValue(type, uInfo), operation, targetStat, targetStat2);
+}
 
 bool FormulaCondition::EvaluateInternal(UnitItemInfo* uInfo,
 	Condition* arg1,
