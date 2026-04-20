@@ -1028,6 +1028,35 @@ private:
 		Condition* arg2);
 };
 
+class MinMaxDamageCondition : public Condition
+{
+public:
+	enum class DamageType
+	{
+		MIN,
+		MAX
+	};
+
+	MinMaxDamageCondition(DamageType type, BYTE op, unsigned int target, unsigned int target2):
+		type(type),
+		operation(op),
+		targetStat(target),
+		targetStat2(target2)
+	{
+		conditionType = CT_Operand;
+	}
+
+	static int GetValue(DamageType type, UnitItemInfo* uInfo);
+private:
+	BYTE			operation;
+	unsigned int	targetStat;
+	unsigned int	targetStat2;
+	DamageType		type;
+	bool			EvaluateInternal(UnitItemInfo* uInfo,
+		Condition* arg1,
+		Condition* arg2);
+};
+
 class FormulaCondition : public Condition
 {
 public:
