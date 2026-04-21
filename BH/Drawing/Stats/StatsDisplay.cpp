@@ -361,7 +361,7 @@ void StatsDisplay::OnDraw()
 			L"Level:ÿc0 %d",
 			static_cast<int>(player_level));
 
-		auto map_id = **Var_D2CLIENT_MapId();
+		auto map_id = **Var_D2CLIENT_Music_CurrentLevelId();
 		auto difficulty = D2CLIENT_GetDifficulty();
 		auto act_id = StatsDisplay::GetActIndex(map_id, difficulty);
 		auto xp_percentage = 0.0;
