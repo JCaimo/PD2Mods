@@ -382,7 +382,7 @@ void StashExport::GetItemInfo(UnitAny* pItem, JSONObject* pBuffer) {
 			//pItem->pItemData->dwQuality != ITEM_QUALITY_SET) {
 		DWORD value = 0;
 		Stat* aStatList = new Stat[STAT_MAX];
-		StatList* pStatList = D2COMMON_GetStatList(pItem, NULL, STAT_MAX);
+		StatList* pStatList = D2COMMON_GetStatList(pItem, NULL, 0x40);
 		if (pStatList) {
 			DWORD dwStats = D2COMMON_CopyStatList(pStatList, aStatList, STAT_MAX);
 			for (UINT i = 0; i < dwStats; i++) {
@@ -603,7 +603,7 @@ static JSONObject* DEFAULT_FUNCTION(UnitAny* pItem, ItemsTxtStat itemStats, Item
 {
 	auto statLayer = param ? param : 0;
 	int statId = pItemStatCostTxt->wStat;
-	StatList* pStatList = D2COMMON_GetStatList(pItem, 0, STAT_MAX);
+	StatList* pStatList = D2COMMON_GetStatList(pItem, 0, 0x40);
 	int statVal = D2COMMON_GetStatValueFromStatList(pStatList, statId, statLayer);
 
 	if (checkFlag(pItem, ITEM_RUNEWORD))
@@ -629,7 +629,7 @@ static JSONObject* DAMAGE_PERCENT_FUNCTION(UnitAny* pItem, ItemsTxtStat itemStat
 {
 	auto entry = new JSONObject();
 	std::string name = "% Enhanced Damage";
-	StatList* pStatList = D2COMMON_GetStatList(pItem, 0x00, STAT_MAX);
+	StatList* pStatList = D2COMMON_GetStatList(pItem, 0x00, 0x40);
 	int statVal = D2COMMON_GetStatValueFromStatList(pStatList, STAT_ENHANCEDMINIMUMDAMAGE, 0);
 	if (checkFlag(pItem, ITEM_RUNEWORD))
 	{
