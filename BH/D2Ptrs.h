@@ -374,6 +374,7 @@ FUNCPTR(D2COMMON, 10061_INVENTORY_GetLeftHandWeapon, UnitAny* __stdcall, (Invent
 FUNCPTR(D2COMMON, 11139_INVENTORY_GetItemFromBodyLoc, UnitAny* __stdcall, (Inventory* pInventory, int nBodyLoc), -11139);
 ASMPTR(D2COMMON, GetStatsWithIdFromStatlist, 0x382F0);
 FUNCPTR(D2COMMON, 10744_ITEMS_IsMatchingType, BOOL __stdcall, (UnitAny* pItem, int iType), -10744, -10601)
+FUNCPTR(D2COMMON, 11034_ITEMS_CheckItemTypes, BOOL __stdcall, (int nItemType1, int nItemType2), -11034);
 FUNCPTR(D2COMMON, GetStartSkill, Skill* __stdcall, (UnitAny* pUnit), -10947);
 
 FUNCPTR(D2COMMON, CheckUnitCollision, DWORD __stdcall, (UnitAny* pUnitA, UnitAny* pUnitB, DWORD dwBitMask), -10839, -10221)

@@ -419,12 +419,21 @@ int __stdcall GetMasteryStat(UnitAny* pUnit, int nStatId, int nSkill)
 		Skill* pSkill = GetSkillFromUnitBySkillId(pUnit, nSkill);
 		if (pSkill)
 		{
+			Skill* pRightSkill = D2COMMON_10507_UNITS_GetRightSkill(pUnit);
+			int nRightSkill = 0;
+			if (pRightSkill && pRightSkill->pSkillInfo)
+			{
+				nRightSkill = pRightSkill->pSkillInfo->wSkillId;
+			}
+
 			int nSkillLevel = D2COMMON_GetSkillLevel(pUnit, pSkill, TRUE);
 			SkillsTxt* pSkillsTxt = GetSkillRecord(nSkill);
+			SkillsTxt* pRightSkillsTxt = GetSkillRecord(nRightSkill);
 			UnitAny* pItem = D2COMMON_10061_INVENTORY_GetLeftHandWeapon(pUnit->pInventory);
-			if (pSkillsTxt)
+			if (pSkillsTxt && pRightSkill)
 			{
 				int nItemType = pSkillsTxt->wPassiveiType;
+				int nRightSkillItemType = pRightSkillsTxt->wITypeA1;
 				if (nItemType <= 0)
 				{
 					return 0;
@@ -454,7 +463,9 @@ int __stdcall GetMasteryStat(UnitAny* pUnit, int nStatId, int nSkill)
 					break;
 				case STAT_CRITICALSTRIKE:
 				{
-					if (nSkill == SKILL_ONEHANDMASTERY || nSkill == SKILL_THROWINGMASTERY || nSkill == SKILL_CLAWANDDAGGERMASTERY)
+					if (((nSkill == SKILL_ONEHANDMASTERY && D2COMMON_11034_ITEMS_CheckItemTypes(nRightSkillItemType, ITEM_TYPE_WEAPON) && !D2COMMON_11034_ITEMS_CheckItemTypes(nRightSkillItemType, ITEM_TYPE_MISSILE_WEAPON) && !D2COMMON_11034_ITEMS_CheckItemTypes(nRightSkillItemType, ITEM_TYPE_THROWN_WEAPON)) || nRightSkillItemType <= 0) ||
+						(nSkill == SKILL_CLAWANDDAGGERMASTERY && D2COMMON_11034_ITEMS_CheckItemTypes(nRightSkillItemType, ITEM_TYPE_HAND_TO_HAND)) ||
+						(nSkill == SKILL_THROWINGMASTERY && D2COMMON_11034_ITEMS_CheckItemTypes(nRightSkillItemType, ITEM_TYPE_THROWN_WEAPON)))
 					{
 						nStatValue = D2COMMON_10786_SKILLS_EvaluateSkillFormula(pUnit, pSkillsTxt->dwPassiveCalc3, nSkill, nSkillLevel);
 						nMasteryValue = nStatValue;
@@ -524,9 +535,7 @@ int __stdcall GetMasteryStat(UnitAny* pUnit, int nStatId, int nSkill)
 				}
 				else
 				{
-					return -nStatValue;
-					/*
-					if (nStatId == STAT_CRUSHINGBLOW || nStatId == STAT_CRUSHINGBLOW_EFFICIENCY || nStatId == STAT_CRITICALSTRIKE_MULTIPLIER)
+					if (nStatId == STAT_PIERCE)
 					{
 						return -nStatValue;
 					}
@@ -534,7 +543,6 @@ int __stdcall GetMasteryStat(UnitAny* pUnit, int nStatId, int nSkill)
 					{
 						return 0;
 					}
-					*/
 				}
 			}
 		}
