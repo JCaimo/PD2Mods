@@ -1085,6 +1085,8 @@ unordered_map<wstring, ReplacementSpec> ReplacementMap = {
 	{ L"LBRACE", { 0, ReplacementSpec::ReplaceBindString(L"{") } },
 	// %RBRACE%
 	{ L"RBRACE", { 0, ReplacementSpec::ReplaceBindString(L"}") } },
+	// %PERCENT%
+	{ L"PERCENT", { 0, ReplacementSpec::ReplaceBindString(L"%") } },
 	{ L"BUYPRICE", { 0, ReplacementSpec::ReplaceBuyPrice } },
 	{ L"SELLPRICE", { 0, ReplacementSpec::ReplacePrice } },
 	{ L"PRICE", { 0, ReplacementSpec::ReplacePrice } },
