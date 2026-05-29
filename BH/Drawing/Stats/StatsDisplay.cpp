@@ -717,7 +717,7 @@ void StatsDisplay::OnDraw()
 
 		y += 8;
 		int vLevelThreshold[5] = { 9, 18, 27, 36, 45 };
-		int nOWFrameDamage = D2GAME_CalcOpenWoundsDamage(vLevelThreshold, player_level) + 25;
+		int nOWFrameDamage = D2GAME_CalcOpenWoundsDamage(vLevelThreshold, player_level) + 40;
 		int nOWCharDPS = (nOWFrameDamage * 25) / 256;
 
 		int nCrushingBlowChance = D2COMMON_GetUnitStat(unit, STAT_CRUSHINGBLOW, 0) + GetMasteryStat(unit, STAT_CRUSHINGBLOW, SKILL_TWOHANDMASTERY);
