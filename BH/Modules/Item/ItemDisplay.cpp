@@ -1720,6 +1720,7 @@ ReplaceContext::ReplaceContext(UnitItemInfo* info, wstring name, bool limit) :
 	blockedNL(false) {
 	text = D2COMMON_GetItemText(info->item->dwTxtFileNo);
 	inShop = (info->item->pItemData->pOwnerInventory != 0 && // Skip on ground items
+		info->item->pItemData->pOwnerInventory->pOwner != 0 &&
 		find(begin(ShopNPCs), end(ShopNPCs), info->item->pItemData->pOwnerInventory->pOwner->dwTxtFileNo) != end(ShopNPCs));
 	nlAllowed = ((info->item->pItemData->dwFlags & ITEM_IDENTIFIED) > 0 &&
 		(info->item->pItemData->dwQuality >= ITEM_QUALITY_MAGIC || (info->item->pItemData->dwFlags & ITEM_RUNEWORD) > 0)) ||
@@ -3069,6 +3070,7 @@ void TrimItemText(UnitItemInfo* uInfo,
 		nColorCodesSize += 3 * match_count;
 
 		bool inShop = (uInfo->item->pItemData->pOwnerInventory != 0 && // Skip on ground items
+			uInfo->item->pItemData->pOwnerInventory->pOwner != 0 &&
 			find(begin(ShopNPCs), end(ShopNPCs), uInfo->item->pItemData->pOwnerInventory->pOwner->dwTxtFileNo) != end(ShopNPCs));
 
 		// Increase limit for shop items
@@ -4901,7 +4903,8 @@ bool LocationCondition::EvaluateInternal(UnitItemInfo* uInfo,
 		case LOCATIONFLAG_EQUIPPED:
 			if (pItemData->ItemLocation == STORAGE_NULL &&
 				pItemData->BodyLocation > 0 &&
-				pItemData->pOwnerInventory && pItemData->pOwnerInventory->pOwner == D2CLIENT_GetPlayerUnit())
+				pItemData->pOwnerInventory &&
+				pItemData->pOwnerInventory->pOwner == D2CLIENT_GetPlayerUnit())
 			{
 				has_location = true;
 			}
@@ -4911,7 +4914,8 @@ bool LocationCondition::EvaluateInternal(UnitItemInfo* uInfo,
 			if (pMerc &&
 				pItemData->ItemLocation == STORAGE_NULL &&
 				pItemData->BodyLocation > 0 &&
-				pItemData->pOwnerInventory && pItemData->pOwnerInventory->pOwner == pMerc)
+				pItemData->pOwnerInventory &&
+				pItemData->pOwnerInventory->pOwner == pMerc)
 			{
 				has_location = true;
 			}
@@ -4919,21 +4923,24 @@ bool LocationCondition::EvaluateInternal(UnitItemInfo* uInfo,
 		case LOCATIONFLAG_INVENTORY:
 			if (pItemData->ItemLocation == STORAGE_INVENTORY &&
 				uInfo->item->dwMode == ITEM_MODE_INV_STASH_CUBE_STORE &&
-				pItemData->pOwnerInventory && pItemData->pOwnerInventory->pOwner == D2CLIENT_GetPlayerUnit())
+				pItemData->pOwnerInventory &&
+				pItemData->pOwnerInventory->pOwner == D2CLIENT_GetPlayerUnit())
 			{
 				has_location = true;
 			}
 			break;
 		case LOCATIONFLAG_CUBE:
 			if (pItemData->ItemLocation == STORAGE_CUBE &&
-				pItemData->pOwnerInventory && pItemData->pOwnerInventory->pOwner == D2CLIENT_GetPlayerUnit())
+				pItemData->pOwnerInventory &&
+				pItemData->pOwnerInventory->pOwner == D2CLIENT_GetPlayerUnit())
 			{
 				has_location = true;
 			}
 			break;
 		case LOCATIONFLAG_STASH:
 			if (pItemData->ItemLocation == STORAGE_STASH &&
-				pItemData->pOwnerInventory && pItemData->pOwnerInventory->pOwner == D2CLIENT_GetPlayerUnit())
+				pItemData->pOwnerInventory &&
+				pItemData->pOwnerInventory->pOwner == D2CLIENT_GetPlayerUnit())
 			{
 				has_location = true;
 			}
