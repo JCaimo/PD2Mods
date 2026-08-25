@@ -138,6 +138,22 @@ struct BHApp
 
 	struct
 	{
+		SettingsBool quickResumeEnabled =
+			{ true, true };
+	
+		// 0 = Highest unlocked
+		// 1 = Last played
+		// 2 = Normal
+		// 3 = Nightmare
+		// 4 = Hell
+		SettingsInt quickResumeDifficulty =
+			{ 0, 0, 0, 4 };
+		
+		SettingsBool smartBeltEnabled = { true, true };
+	} mods;
+
+	struct
+	{
 		SettingsToggle autoParty = { {}, {0, true} };
 		SettingsToggle autoCorpseLoot = { {}, {0, true} };
 	} party;
@@ -215,6 +231,8 @@ typedef enum BHConfigId
 	BH_CONFIG_DROPSOUNDS,
 	BH_CONFIG_ADVANCEDSTATS_OPEN,
 	BH_CONFIG_HIDE_GAME_PASSWORD,
+	BH_CONFIG_QUICK_RESUME_ENABLED,
+	BH_CONFIG_QUICK_RESUME_DIFFICULTY,
 } BHConfigId;
 
 typedef enum D2GLConfigId

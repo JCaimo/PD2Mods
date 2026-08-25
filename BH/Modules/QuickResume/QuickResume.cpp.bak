@@ -1,0 +1,162 @@
+#include "QuickResume.h"
+
+#include "../../BH.h"
+#include "../../D2Ptrs.h"
+#include "../../Drawing.h"
+
+#include <Xinput.h>
+
+#pragma comment(lib, "Xinput9_1_0.lib")
+
+using namespace Drawing;
+
+namespace
+{
+    bool IsControllerXDown()
+    {
+        XINPUT_STATE controllerState = {};
+
+        if (XInputGetState(0, &controllerState) != ERROR_SUCCESS)
+            return false;
+
+        return (controllerState.Gamepad.wButtons & XINPUT_GAMEPAD_X) != 0;
+    }
+}
+
+QuickResume::QuickResume()
+    : Module("Quick Resume"),
+      step(QuickResumeStep::Idle),
+      available(false),
+      xWasDown(false),
+      xPressCount(0)
+{
+}
+
+void QuickResume::CaptureCharacter()
+{
+    UnitAny* player = D2CLIENT_GetPlayerUnit();
+
+    if (!player)
+        return;
+
+    if (!player->pPlayerData)
+        return;
+
+    if (player->pPlayerData->szName[0] == '\0')
+        return;
+
+    characterName.assign(player->pPlayerData->szName);
+}
+
+void QuickResume::OnGameJoin()
+{
+    available = false;
+    step = QuickResumeStep::Idle;
+    xPressCount = 0;
+
+    CaptureCharacter();
+
+    // Synchronize controller state so a held X does not
+    // immediately trigger after leaving the game.
+    xWasDown = IsControllerXDown();
+}
+
+void QuickResume::OnLoop()
+{
+    // While we are inside a game, continually keep the current
+    // character name cached.
+    if (D2CLIENT_GetPlayerUnit())
+        CaptureCharacter();
+}
+
+void QuickResume::OnGameExit()
+{
+    // We can only arm Quick Resume if we successfully captured
+    // the character that was being played.
+    if (characterName.empty())
+        return;
+
+    available = true;
+    step = QuickResumeStep::Ready;
+
+    // Require X to be released and pressed again after Save & Exit.
+    xWasDown = IsControllerXDown();
+}
+
+bool QuickResume::PollXPressed()
+{
+    XINPUT_STATE controllerState = {};
+
+    DWORD result = XInputGetState(0, &controllerState);
+
+    if (result != ERROR_SUCCESS)
+    {
+        xWasDown = false;
+        return false;
+    }
+
+    const bool xDown =
+        (controllerState.Gamepad.wButtons & XINPUT_GAMEPAD_X) != 0;
+
+    const bool xPressed =
+        xDown && !xWasDown;
+
+    xWasDown = xDown;
+
+    return xPressed;
+}
+
+void QuickResume::OnOOGDraw()
+{
+    if (!available)
+        return;
+
+    // Extra guard: Quick Resume must never operate while a
+    // player unit exists.
+    if (D2CLIENT_GetPlayerUnit())
+        return;
+
+    if (PollXPressed())
+    {
+        ++xPressCount;
+        step = QuickResumeStep::Triggered;
+    }
+
+    const char* stateText = "UNKNOWN";
+
+    switch (step)
+    {
+    case QuickResumeStep::Idle:
+        stateText = "IDLE";
+        break;
+
+    case QuickResumeStep::Ready:
+        stateText = "READY";
+        break;
+
+    case QuickResumeStep::Triggered:
+        stateText = "X DETECTED";
+        break;
+    }
+
+    Texthook::Draw(
+        20,
+        30,
+        None,
+        0,
+        Gold,
+        "Quick Resume: %s",
+        characterName.c_str()
+    );
+
+    Texthook::Draw(
+        20,
+        46,
+        None,
+        0,
+        White,
+        "State: %s | X presses: %u",
+        stateText,
+        xPressCount
+    );
+}

@@ -237,6 +237,18 @@ void Config::SaveConfig()
 	jsonGame["always_show_items"] = App.game.alwaysShowItems.value;
 	App.jsonConfig["game"] = jsonGame;
 
+	// Mods
+	json jsonMods;
+
+	jsonMods["quick_resume_enabled"] =
+		App.mods.quickResumeEnabled.value;
+
+	jsonMods["quick_resume_difficulty"] =
+		App.mods.quickResumeDifficulty.value;
+
+	App.jsonConfig["mods"] =
+		jsonMods;
+	
 	// Party settings
 	json jsonParty;
 	jsonParty["auto_party"]["enabled"] = App.party.autoParty.toggle.isEnabled;
@@ -391,6 +403,21 @@ void Config::LoadConfig()
 	App.game.experienceMeter.value = GetBool("/game"_json_pointer, "experience_meter", App.game.experienceMeter);
 	App.game.alwaysShowItems.value = GetBool("/game"_json_pointer, "always_show_items", App.game.alwaysShowItems);
 
+	// Mods
+	App.mods.quickResumeEnabled.value =
+		GetBool(
+			"/mods"_json_pointer,
+			"quick_resume_enabled",
+			App.mods.quickResumeEnabled
+		);
+
+	App.mods.quickResumeDifficulty.value =
+		GetInt(
+			"/mods"_json_pointer,
+			"quick_resume_difficulty",
+			App.mods.quickResumeDifficulty
+		);
+	
 	// Party settings
 	App.party.autoParty.toggle = GetToggle("/party"_json_pointer, "auto_party", App.party.autoParty);
 	App.party.autoCorpseLoot.toggle = GetToggle("/party"_json_pointer, "auto_corpse_loot", App.party.autoCorpseLoot);

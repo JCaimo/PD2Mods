@@ -106,7 +106,8 @@ void BH::Initialize()
 	new StashExport();
 	new MapNotify();
 	new ChatColor();
-
+	new QuickResume();
+	new SmartBelt();
 	moduleManager->LoadModules();
 
 	statsDisplay = new Drawing::StatsDisplay("Stats");
@@ -307,8 +308,16 @@ extern "C" {
 			return !BH::statsDisplay->IsMinimized();
 		case BH_CONFIG_HIDE_GAME_PASSWORD:
 			return App.screen.hideGamePassword.value;
+		case BH_CONFIG_QUICK_RESUME_ENABLED:
+			return App.mods
+				.quickResumeEnabled
+				.value;
+		case BH_CONFIG_QUICK_RESUME_DIFFICULTY:
+			return App.mods
+				.quickResumeDifficulty
+				.value;
 		}
-
+		
 		return 0;
 	}
 
@@ -370,8 +379,31 @@ extern "C" {
 		case BH_CONFIG_HIDE_GAME_PASSWORD:
 			App.screen.hideGamePassword.value = configVal;
 			bSave = TRUE;
-		}
+		case BH_CONFIG_QUICK_RESUME_ENABLED:
+			App.mods
+				.quickResumeEnabled
+				.value =
+					configVal != 0;
 
+			bSave = TRUE;
+			break;
+
+		case BH_CONFIG_QUICK_RESUME_DIFFICULTY:
+			if (configVal < 0)
+				configVal = 0;
+
+			if (configVal > 4)
+				configVal = 4;
+
+			App.mods
+				.quickResumeDifficulty
+				.value =
+					configVal;
+
+			bSave = TRUE;
+			break;
+		}
+		
 		if (bSave)
 		{
 			App.config->SaveConfig();
@@ -423,6 +455,16 @@ extern "C" {
 				itemObj->ChangeFilterLevels(App.lootfilter.lastFilterLevel.uValue);
 				bSave = TRUE;
 			}
+			break;
+		case BH_CONFIG_QUICK_RESUME_ENABLED:
+			App.mods
+				.quickResumeEnabled
+				.value =
+					!App.mods
+						.quickResumeEnabled
+						.value;
+
+			bSave = TRUE;
 			break;
 		}
 		if (bSave)

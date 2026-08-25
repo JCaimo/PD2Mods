@@ -12,3 +12,5 @@
 #include "Modules\StashExport\StashExport.h"
 #include "Modules\ChatColor\ChatColor.h"
 #include "Modules/GameSettings/GameSettings.h"
+#include "Modules\QuickResume\QuickResume.h"
+#include "Modules\SmartBelt\SmartBelt.h"
